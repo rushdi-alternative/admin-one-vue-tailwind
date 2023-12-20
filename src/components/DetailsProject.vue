@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, inject } from "vue";
 import { useProjectStore } from "@/stores/project";
 import CardBoxModalStateChanging from "@/components/CardBoxModalStateChanging.vue";
 import TableCheckboxCell from "@/components/TableCheckboxCell.vue";
@@ -27,6 +27,8 @@ const projectStore = useProjectStore();
 const statusStore = useStatusStore();
 const priorityStore = usePriorityStore();
 const userStore = useUserStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const modalChangeType = ref("");
 const currentProject = ref(null);
@@ -60,7 +62,7 @@ async function fetchProject() {
   const projectId = route.params.id;
   isLoading.value = true;
   try {
-    const response = await projectStore.viewProject(projectId);
+    const response = await projectStore.viewProject(apiBaseUrl, projectId);
     project.value = response.data;
     projectHistory.value = response.data.history;
     processedProjectHistory.value = response.data.history;
@@ -95,7 +97,7 @@ async function fetchProject() {
 async function fetchUsers() {
   isLoading.value = true;
   try {
-    const response = await userStore.allUsers();
+    const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -108,7 +110,7 @@ async function fetchUsers() {
 async function fetchStatus() {
   isLoading.value = true;
   try {
-    const response = await statusStore.statuses({ all: true });
+    const response = await statusStore.statuses(apiBaseUrl, { all: true });
     statusList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -121,7 +123,7 @@ async function fetchStatus() {
 async function fetchPriorities() {
   isLoading.value = true;
   try {
-    const response = await priorityStore.priorities({ all: true });
+    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
     priorityList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -223,7 +225,7 @@ const submitComment = async () => {
 }
 
   try {
-    const response = await projectStore.addCommentToProject(formData, project.value.id);
+    const response = await projectStore.addCommentToProject(apiBaseUrl, formData, project.value.id);
     newName.value = '';
     newDescription.value = '';
     newComment.value = '';
@@ -255,7 +257,7 @@ const submitComment = async () => {
           />
         </SectionTitleLineWithButton>
         <div class="grid grid-cols-1 gap-6 mb-6 ">
-          <CardBox :key="project.id">
+          <!-- <CardBox :key="project.id">
             <div>
               <div class="flex flex-row gap-6">
                 <div class="flex-1">
@@ -363,12 +365,143 @@ const submitComment = async () => {
                 {{ project.description }}
               </div>
             </div>
+          </CardBox> -->
+          <CardBox :key="project.id">
+            <div class="flex flex-col gap-6">
+              <div class="flex flex-col sm:flex-row gap-6">
+                <div class="flex-1">
+                  <div class="mb-1 w-full">
+                    <b>Status</b>
+                  </div>
+                  <div class="mb-3 w-full">
+                    <select v-model="project.status_id"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      @change="openModal('status', project, $event.target.value)" small>
+                      <option v-for="status in statusList" :key="status.id" :value="status.id">
+                        {{ status.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="flex-1">
+                  <div class="mb-1 w-full">
+                    <b>Priority</b>
+                  </div>
+                  <div class="mb-3 w-full">
+                    <select v-model="project.priority_id"
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      @change="openModal('priority', project, $event.target.value)" small>
+                      <option v-for="priority in priorityList" :key="priority.id" :value="priority.id">
+                        {{ priority.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="flex-1">
+                  <div class="mb-1 w-full">
+                    <b>Start Date</b>
+                  </div>
+                  <div class="mb-3 w-full">
+                    {{ project.start_date }}
+                  </div>
+                </div>
+
+                <div class="flex-1">
+                  <div class="mb-1 w-full">
+                    <b>End Date</b>
+                  </div>
+                  <div class="mb-3 w-full">
+                    {{ project.end_date !== null ? project.end_date : '-' }}
+                  </div>
+                </div>
+
+                <div class="flex-1">
+                  <div class="mb-1 w-full">
+                    <b>Created By</b>
+                  </div>
+                  <div class="mb-3 w-full whitespace-nowrap">
+                    {{ project.userDetails.name }}
+                  </div>
+                </div>
+
+                <div class="flex-1">
+                  <div class="mb-1 w-full">
+                    <b>Assigned To</b>
+                  </div>
+                  <div class="mb-3 w-full">
+                    <select v-if="userList[0]"
+                      class="select-box bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      v-model="project.assigned_to_user_id"
+                      @change="openModal('assigned_to', project, $event.target.value)" small>
+                      <option value="">Unassign User</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.id">
+                        <span v-if="user.id !== 'all'">{{ user.email }}</span>
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="mb-1 w-full"><b>&nbsp;</b></div>
+                  <BaseButton
+                    color="danger"
+                    :icon="mdiTrashCan"
+                    small
+                    @click="openModal('delete', project, $event.target.value)"
+                  />
+                </div>
+              </div>
+
+              <div class="flex-1 gap-6 mb-3">
+                <div class="mb-2 w-full">
+                  <label><b>Progress</b></label>
+                </div>
+              </div>
+
+              <div class="flex-1 mb-6">
+                <progress class="flex w-2/5 self-center lg:w-full" max="100" :value="project.progress">
+                  {{ project.progress }}
+                </progress>
+              </div>
+
+              <div class="flex-1 gap-6 mb-1">
+                <div class="mb-2 w-full">
+                  <label><b>Description</b></label>
+                </div>
+              </div>
+
+              <div class="flex-1">
+                {{ project.description }}
+              </div>
+            </div>
           </CardBox>
+
 
           <CardBox v-for="(history, date) in projectHistoryGroupByDate" :key="date" class="text-justify">
             <div v-for="(h, index) in history" :key="h.id" class="flex flex-row gap-6">
               <div class="flex-1 gap-6 mb-3">
-                <div v-if="typeof h.name !== 'undefined'">{{ `Project Name - ${h.name}` }}</div>
+                <div v-show="h.name !== undefined"><b>Project Name</b> - <span class="bold">{{ h.name }}</span></div>
+                <div v-show="h.description !== undefined"><b>Description</b> - <span class="bold">{{ h.description }}</span></div>
+                <div v-show="h.status_id !== undefined">
+                  <b>Status updated to</b> - <span class="bold">{{ statusList.find(status => status.id === h.status_id)?.name || 'Status not found' }}</span>
+                </div>
+                <div v-show="h.priority_id !== undefined">
+                  <b>Priority updated to </b> - <span class="bold">{{ priorityList.find(priority => priority.id === h.priority_id)?.name || 'Priority not found' }}</span>
+                </div>
+                <div v-show="h.start_date !== undefined"><b>Start Date</b> - <span class="bold">{{ h.start_date }}</span></div>
+                <div v-show="h.end_date !== undefined"><b>End Date</b> - <span class="bold">{{ h.end_date }}</span></div>
+                <div v-show="h.estimated_hours > 0"><b>Estimated hours</b> - <span class="bold">{{ h.estimated_hours }} hrs</span></div>
+                <div v-show="h.spent_hours > 0"><b>Spent hours</b> - <span class="bold">{{ h.spent_hours }} hrs</span></div>
+                <div v-show="h.progress > 0"><b>Progress</b> - <span class="bold">{{ h.progress }}</span></div>
+                <div v-show="h.assigned_to_user_id !== undefined">
+                  <b>Assigned To</b> - <span class="bold">{{ userList.find(user => user.id === h.assigned_to_user_id)?.name || 'User not found' }}</span>
+                </div>
+                <div v-show="h.comment_id !== undefined">
+                  <b>Comment</b> - <span class="bold">{{ projectCommentList.find(comment => comment.id === h.comment_id)?.comment_text || 'Comment not found' }}</span>
+                </div>
+                <!-- <div v-if="typeof h.name !== 'undefined'"><b>Project Name</b> - {{ h.name }}</div>
                 <div v-if="typeof h.description !== 'undefined'">{{ `Description - ${h.description}` }}</div>
                 <div v-if="typeof h.status_id !== 'undefined'">
                   Status updated to - {{ statusList.find(status => status.id === h.status_id)?.name || 'Status not found' }}
@@ -386,7 +519,7 @@ const submitComment = async () => {
                 </div>
                 <div v-if="typeof h.comment_id !== 'undefined'">
                   Comment - {{ projectCommentList.find(comment => comment.id === h.comment_id)?.comment_text || 'Comment not found' }}
-                </div>
+                </div> -->
 
                 <div v-if="typeof h.attachment_id !== 'undefined'">
                   <template v-if="projectAttachmentList.find(attachment => attachment.id === h.attachment_id)">
@@ -424,24 +557,28 @@ const submitComment = async () => {
               <label for="completed_progress" class="p-2">Update Project Description: </label>
               <FormControl class="flex-1 mb-3" type="textarea" v-model="newDescription" placeholder="Update the project Description" />
             </div>
-            <div class="flex mb-3 gap-6">
+            <div class="flex flex-col sm:flex-row mb-3 gap-6">
               <div class="flex-1 w-full">
                 <label for="completed_progress" class="p-2">Completed: </label>
                 <select
                   id="completed_progress"
                   v-model="progress"
-                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500
+                  focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+                  dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 >
                   <option v-for="i in percentageArray()" :key="i" :value="i">
                     {{ i }} %
                   </option>
                 </select>
               </div>
-              <div class="flex-1 w-full">
+
+              <div class="flex-1 w-full sm:w-auto">
                 <label for="completed_progress" class="p-2">Start Date: </label>
                 <FormControl type="date" v-model="startDate" />
               </div>
-              <div class="flex-1 w-full">
+
+              <div class="flex-1 w-full sm:w-auto">
                 <label for="completed_progress" class="p-2">End Date: </label>
                 <FormControl type="date" v-model="endDate" />
               </div>

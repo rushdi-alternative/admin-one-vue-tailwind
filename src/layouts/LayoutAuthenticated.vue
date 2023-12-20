@@ -29,7 +29,7 @@ router.beforeEach(() => {
 
 const handleLogout = async () => {
   try {
-    await authStore.logout();
+    await authStore.logout('');
 
     router.push('/login');
   } catch (error) {

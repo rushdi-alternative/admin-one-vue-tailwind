@@ -5,7 +5,7 @@ import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import { useStyleStore } from "@/stores/style.js";
 import { useMainStore } from "@/stores/main.js";
 import BaseIcon from "@/components/BaseIcon.vue";
-import UserAvatarCurrentUser from "@/components/UserAvatarCurrentUser.vue";
+// import UserAvatarCurrentUser from "@/components/UserAvatarCurrentUser.vue";
 import NavBarMenuList from "@/components/NavBarMenuList.vue";
 import BaseDivider from "@/components/BaseDivider.vue";
 
@@ -106,10 +106,10 @@ onBeforeUnmount(() => {
           item.menu,
       }"
     >
-      <UserAvatarCurrentUser
+      <!-- <UserAvatarCurrentUser
         v-if="item.isCurrentUser"
         class="w-6 h-6 mr-3 inline-flex"
-      />
+      /> -->
       <BaseIcon v-if="item.icon" :path="item.icon" class="transition-colors" />
       <span
         class="px-2 transition-colors"

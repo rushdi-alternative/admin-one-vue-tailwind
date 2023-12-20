@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from "vue";
+import { inject, reactive, ref } from "vue";
 import { useMainStore } from "@/stores/main";
 import {
   mdiAccount,
@@ -24,6 +24,8 @@ import { useUserStore } from "@/stores/user";
 
 const mainStore = useMainStore();
 const userStore = useUserStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const profileForm = reactive({
   name: mainStore.userName,
@@ -69,7 +71,7 @@ const submitProfile = async () => {
     const formFilters = {
       name: profileForm.name
     };
-    const response = await userStore.updateUser(formFilters, localStorage.getItem('userId'));
+    const response = await userStore.updateUser(apiBaseUrl, formFilters, localStorage.getItem('userId'));
 
     if(response.status === 200) {
       successNameMessage.value = response.data.message;
@@ -109,7 +111,7 @@ const submitPass = async () => {
       password: passwordForm.password,
       password_confirmation: passwordForm.password_confirmation
     };
-    const response = await userStore.changeUserPassword(formFilters, localStorage.getItem('userId'));
+    const response = await userStore.changeUserPassword(apiBaseUrl, formFilters, localStorage.getItem('userId'));
 
     if(response.status === 200) {
       successPasswordMessage.value = response.data.message;

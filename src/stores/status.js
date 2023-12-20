@@ -6,12 +6,12 @@ export const useStatusStore = defineStore("status", {
     statuses: [],
   }),
   actions: {
-    async statuses(filters) {
+    async statuses(apiBaseUrl, filters) {
       try {
         const queryString = Object.entries(filters)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
-        const response = await axios.get(`/statuses?${queryString}`);
+        const response = await axios.get(`${apiBaseUrl}statuses?${queryString}`);
         return response.data;
       } catch (error) {
         return error.response.data;

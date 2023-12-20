@@ -7,60 +7,60 @@ export const useRoleStore = defineStore("role", {
   }),
   actions: {
 
-    async allRoles() {
+    async allRoles(apiBaseUrl) {
       try {
-        const response = await axios.get(`/all-roles`);
+        const response = await axios.get(`${apiBaseUrl}all-roles`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async roles(filters) {
+    async roles(apiBaseUrl, filters) {
       try {
         const queryString = Object.entries(filters)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
-        const response = await axios.get(`/roles?${queryString}`);
+        const response = await axios.get(`${apiBaseUrl}roles?${queryString}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async viewRole(id) {
+    async viewRole(apiBaseUrl, id) {
       try {
-        const response = await axios.get(`/role/${id}`);
+        const response = await axios.get(`${apiBaseUrl}role/${id}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async updateRolePermission(filters,id) {
+    async updateRolePermission(apiBaseUrl, filters, id) {
       try {
-        const response = await axios.put(`/roles-permissions/${id}`, filters);
+        const response = await axios.put(`${apiBaseUrl}roles-permissions/${id}`, filters);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async updateRole(filters,id) {
+    async updateRole(apiBaseUrl, filters, id) {
       try {
-        const response = await axios.put(`/role/${id}`, filters);
+        const response = await axios.put(`${apiBaseUrl}role/${id}`, filters);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async deleteRole(id) {
+    async deleteRole(apiBaseUrl, id) {
       try {
-        const response = await axios.delete(`/role/${id}`);
+        const response = await axios.delete(`${apiBaseUrl}role/${id}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async createRole(filters) {
+    async createRole(apiBaseUrl, filters) {
       try {
-        const response = await axios.post(`/role`, filters);
+        const response = await axios.post(`${apiBaseUrl}role`, filters);
         return response;
       } catch (error) {
         return error.response.data;

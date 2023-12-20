@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, inject } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import BaseButtons from "@/components/BaseButtons.vue";
 import BaseButton from "@/components/BaseButton.vue";
@@ -12,6 +12,9 @@ import SectionTitleLineWithButton from "./SectionTitleLineWithButton.vue";
 import { mdiPlus, mdiBriefcase } from "@mdi/js";
 
 const route = useRoute();
+
+const apiBaseUrl = inject('apiBaseUrl');
+
 const roleId = route.params.id;
 
 const isLoading = ref(true);
@@ -30,7 +33,7 @@ const successMsg = ref('');
 async function fetchPermissions(filters) {
   isLoading.value = true;
   try {
-    const response = await permissionStore.permissions(filters);
+    const response = await permissionStore.permissions(apiBaseUrl, filters);
     role.value = response.data;
 
   } catch (error) {
@@ -46,7 +49,7 @@ async function fetchPermissions(filters) {
 async function fetchRoles() {
   isLoading.value = true;
   try {
-    const response = await roleStore.allRoles();
+    const response = await roleStore.allRoles(apiBaseUrl);
     roleList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -61,7 +64,7 @@ async function fetchRoles() {
 async function fetchRole() {
   isLoading.value = true;
   try {
-    const response = await roleStore.viewRole(roleId);
+    const response = await roleStore.viewRole(apiBaseUrl, roleId);
     if (typeof response.data !== 'undefined') {
       role.value = response.data;
       rolePermissions.value = role.value.permissions;
@@ -106,7 +109,7 @@ const updateRolePermission = async () => {
     const filters = {'add': addPermissions, 'remove': removePermissions}
     isLoading.value = true;
     try {
-      const response = await roleStore.updateRolePermission(filters, roleId);
+      const response = await roleStore.updateRolePermission(apiBaseUrl, filters, roleId);
       if (response.message !== 'undefined' && response.message !== null ) {
         if (response.message && response.message.includes('success')) {
           successMsg.value = response.message;

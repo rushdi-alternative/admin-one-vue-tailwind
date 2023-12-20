@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, watch, nextTick } from "vue";
+import { computed, ref, onMounted, watch, nextTick, inject } from "vue";
 import { useProjectStore } from "@/stores/project";
 import CardBoxModalStateChanging from "@/components/CardBoxModalStateChanging.vue";
 import CardBox from "@/components/CardBox.vue";
@@ -19,6 +19,8 @@ const projectStore = useProjectStore();
 const statusStore = useStatusStore();
 const priorityStore = usePriorityStore();
 const userStore = useUserStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const currentUserPermissions = JSON.parse(localStorage.getItem('permissions'));
 const hasAccessToProjectCreate = currentUserPermissions !== null && permissionsToProjectAdd.some(permission => currentUserPermissions.includes(permission));
@@ -88,7 +90,8 @@ const goToPage = (page) => {
 async function fetchProjects(filters) {
   isLoading.value = true;
   try {
-    const response = await projectStore.projectsSummary({
+    const response = await projectStore.projectsSummary(
+      apiBaseUrl, {
       ...filters,
       limit: perPage.value,
       offset: currentPage.value * perPage.value,
@@ -110,7 +113,7 @@ async function fetchProjects(filters) {
 async function fetchUsers() {
   isLoading.value = true;
   try {
-    const response = await userStore.allUsers();
+    const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -123,7 +126,7 @@ async function fetchUsers() {
 async function fetchStatus() {
   isLoading.value = true;
   try {
-    const response = await statusStore.statuses({ all: true });
+    const response = await statusStore.statuses(apiBaseUrl, { all: true });
     statusList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -136,7 +139,7 @@ async function fetchStatus() {
 async function fetchPriorities() {
   isLoading.value = true;
   try {
-    const response = await priorityStore.priorities({ all: true });
+    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
     priorityList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, inject } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import { useStatusStore } from "@/stores/status";
 import { usePriorityStore } from "@/stores/priorities";
@@ -8,10 +8,15 @@ import FormControl from "./FormControl.vue";
 import BaseButtons from "./BaseButtons.vue";
 import BaseButton from "./BaseButton.vue";
 import { useProjectStore } from "@/stores/project";
+import { useUserStore } from "@/stores/user";
 
 const statusStore = useStatusStore();
 const priorityStore = usePriorityStore();
 const projectStore = useProjectStore();
+const userStore = useUserStore();
+
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const isLoading = ref(true);
 
@@ -25,7 +30,7 @@ const endDate = ref(null);
 async function fetchStatus() {
   isLoading.value  = true;
   try {
-    const response = await statusStore.statuses({ all: true });
+    const response = await statusStore.statuses(apiBaseUrl, { all: true });
     statusList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -38,7 +43,7 @@ async function fetchStatus() {
 async function fetchPriorities() {
   isLoading.value  = true;
   try {
-    const response = await priorityStore.priorities({ all: true });
+    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
     priorityList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -53,6 +58,7 @@ async function fetchProjects() {
   isLoading.value  = true;
   try {
     const response = await projectStore.projectNames(
+      apiBaseUrl,
       {
         status: accesptedStatusList,
         all: true

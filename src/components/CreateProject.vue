@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, inject } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import { useStatusStore } from "@/stores/status";
 import { usePriorityStore } from "@/stores/priorities";
@@ -20,6 +20,8 @@ const projectStore = useProjectStore();
 const userStore = useUserStore();
 const statusStore = useStatusStore();
 const priorityStore = usePriorityStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const isLoading = ref(true);
 
@@ -51,7 +53,7 @@ const defaultAssignedTo = ref(null);
 async function fetchUsers() {
   isLoading.value = true;
   try {
-    const response = await userStore.allUsers();
+    const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -64,7 +66,7 @@ async function fetchUsers() {
 async function fetchStatus() {
   isLoading.value  = true;
   try {
-    const response = await statusStore.statuses({ all: true });
+    const response = await statusStore.statuses(apiBaseUrl, { all: true });
     statusList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -77,7 +79,7 @@ async function fetchStatus() {
 async function fetchPriorities() {
   isLoading.value  = true;
   try {
-    const response = await priorityStore.priorities({ all: true });
+    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
     priorityList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -169,6 +171,8 @@ const submitForm = async () => {
   // }
 
   try {
+    const statusSelect = document.getElementById("status_id");
+    const prioritySelect = document.getElementById("priority_id");
     const formFilters = {
       name: name.value,
       description: description.value,
@@ -176,10 +180,15 @@ const submitForm = async () => {
       end_date: endDate.value,
       estimated_hours: estimatedHours.value,
       spent_hours: spentHours.value,
-      assigned_to_user_id: assignedTo.value
+      assigned_to_user_id: assignedTo.value,
+      priority_id:prioritySelect.value,
+      status_id:statusSelect.value
     };
+
+    // console.log(formFilters)
+
     removeNullProperties(formFilters);
-    const response = await projectStore.createProject(formFilters);
+    const response = await projectStore.createProject(apiBaseUrl, formFilters);
     console.log(response);
     router.push(`/project/${response.data.data.id}`);
   } catch (error) {

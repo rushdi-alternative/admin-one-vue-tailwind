@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, onMounted, watch, inject } from "vue";
 import { useTaskStore } from "@/stores/task";
 import CardBoxModalStateChanging from "@/components/CardBoxModalStateChanging.vue";
 import TableCheckboxCell from "@/components/TableCheckboxCell.vue";
@@ -17,6 +17,8 @@ import { perPageOptions } from "@/commons/constant";
 const taskStore = useTaskStore();
 const statusStore = useStatusStore();
 const priorityStore = usePriorityStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const modalChangeType = ref("");
 const currentTask = ref(null);
@@ -70,7 +72,8 @@ const goToPage = (page) => {
 async function fetchTasks() {
   isLoading.value  = true;
   try {
-    const response = await taskStore.tasksSummary({
+    const response = await taskStore.tasksSummary(
+      apiBaseUrl, {
       limit: perPage.value,
       offset: currentPage.value * perPage.value,
     });
@@ -90,7 +93,7 @@ async function fetchTasks() {
 async function fetchStatus() {
   isLoading.value  = true;
   try {
-    const response = await statusStore.statuses({ all: true });
+    const response = await statusStore.statuses(apiBaseUrl, { all: true });
     statusList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -103,7 +106,7 @@ async function fetchStatus() {
 async function fetchPriorities() {
   isLoading.value  = true;
   try {
-    const response = await priorityStore.priorities({ all: true });
+    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
     priorityList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);

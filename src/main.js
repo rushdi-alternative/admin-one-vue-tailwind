@@ -13,7 +13,10 @@ import { styles } from "./commons/constant";
 const pinia = createPinia();
 
 /* Create Vue app */
-createApp(App).use(router).use(pinia).mount("#app");
+const app = createApp(App);
+// app.provide('apiBaseUrl', '/');
+app.provide('apiBaseUrl', 'http://localhost:8000/api/');
+app.use(router).use(pinia).mount("#app");
 
 /* Init Pinia stores */
 const styleStore = useStyleStore(pinia);

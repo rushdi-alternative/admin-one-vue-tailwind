@@ -6,12 +6,12 @@ export const usePriorityStore = defineStore("priority", {
     priorities: [],
   }),
   actions: {
-    async priorities(filters) {
+    async priorities(apiBaseUrl, filters) {
       try {
         const queryString = Object.entries(filters)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
-        const response = await axios.get(`/priorities?${queryString}`);
+        const response = await axios.get(`${apiBaseUrl}priorities?${queryString}`);
         return response.data;
       } catch (error) {
         return error.response.data;

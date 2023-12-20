@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, watch, nextTick } from "vue";
+import { computed, ref, onMounted, watch, nextTick, inject } from "vue";
 import CardBoxModalStateChanging from "@/components/CardBoxModalStateChanging.vue";
 import CardBox from "@/components/CardBox.vue";
 import BaseLevel from "@/components/BaseLevel.vue";
@@ -15,6 +15,8 @@ import { mdiEye, mdiPlus, mdiTrashCan, mdiTableBorder } from "@mdi/js";
 
 const userStore = useUserStore();
 const roleStore = useRoleStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const currentUserId = localStorage.getItem('userId');
 const currentUserRoleName = localStorage.getItem('roleName');
@@ -60,7 +62,7 @@ const goToPage = (page) => {
 async function fetchRoles() {
   isLoading.value  = true;
   try {
-    const response = await roleStore.roles({ all: true });
+    const response = await roleStore.roles(apiBaseUrl, { all: true });
     roleList.value = response.data;
     filteredRoleList.value = roleList.value.filter((role) => role.is_user === 1)
   } catch (error) {
@@ -74,7 +76,7 @@ async function fetchRoles() {
 async function fetchAllUsers() {
   isLoading.value = true;
   try {
-    const response = await userStore.allUsers();
+    const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -87,7 +89,8 @@ async function fetchAllUsers() {
 async function fetchUsers(filters) {
   isLoading.value = true;
   try {
-    const response = await userStore.usersSummary({
+    const response = await userStore.usersSummary(
+      apiBaseUrl, {
       ...filters,
       limit: perPage.value,
       offset: currentPage.value * perPage.value,
@@ -232,7 +235,7 @@ const handleCallback = (result) => {
             <th class="text-center" v-if="currentUserRoleName === 'admin'"> Approved On</th>
             <th class="text-center">Status</th>
             <th>Actions</th>
-            <th />
+            <!-- <th /> -->
           </tr>
         </thead>
         <tbody>

@@ -6,7 +6,7 @@ export const useTaskStore = defineStore("task", {
     tasks: [],
   }),
   actions: {
-    async tasksSummary(filters) {
+    async tasksSummary(apiBaseUrl, filters) {
       try {
         const queryString = Object.entries(filters)
         .map(([key, value]) => {
@@ -17,26 +17,26 @@ export const useTaskStore = defineStore("task", {
           }
         })
         .join('&');
-        const response = await axios.get(`/tasks-summary?${queryString}`);
+        const response = await axios.get(`${apiBaseUrl}tasks-summary?${queryString}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async tasks(filters) {
+    async tasks(apiBaseUrl, filters) {
       try {
         const queryString = Object.entries(filters)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
-        const response = await axios.get(`/tasks?${queryString}`);
+        const response = await axios.get(`${apiBaseUrl}tasks?${queryString}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
-    async updateTask(filters, id) {
+    async updateTask(apiBaseUrl, filters, id) {
       try {
-        const response = await axios.put(`/task/${id}`, filters);
+        const response = await axios.put(`${apiBaseUrl}task/${id}`, filters);
         return response;
       } catch (error) {
         return error.response.data;
