@@ -9,7 +9,9 @@ import CardBoxComponentTitle from "@/components/CardBoxComponentTitle.vue";
 import { useProjectStore } from "@/stores/project";
 import { useUserStore } from "@/stores/user";
 import { useRoleStore } from "@/stores/role";
+import { useTaskStore } from "@/stores/task";
 
+const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 const userStore = useUserStore();
 const roleStore = useRoleStore();
@@ -74,6 +76,25 @@ const confirm = async () => {
           ] = props.referenceId;
 
         const response = await projectStore.updateProject(apiBaseUrl, data, props.id);
+        props.callback(response);
+        return response;
+      }
+    } else if (props.modalType === 'task') {
+      if (props.change === 'delete') {
+        const response = await taskStore.deleteTask(apiBaseUrl, props.id);
+        props.callback(response);
+        return response;
+      } else {
+        const data = {};
+        data[
+          props.change == 'status'
+            ? 'status_id'
+            : props.change == 'priority'
+              ? 'priority_id'
+              : 'assigned_to_user_id'
+          ] = props.referenceId;
+
+        const response = await taskStore.updateTask(apiBaseUrl, data, props.id);
         props.callback(response);
         return response;
       }

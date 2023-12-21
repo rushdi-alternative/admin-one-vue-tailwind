@@ -257,115 +257,6 @@ const submitComment = async () => {
           />
         </SectionTitleLineWithButton>
         <div class="grid grid-cols-1 gap-6 mb-6 ">
-          <!-- <CardBox :key="project.id">
-            <div>
-              <div class="flex flex-row gap-6">
-                <div class="flex-1">
-                  <div class="mb-1 w-full">
-                    <b>Status</b>
-                  </div>
-                  <div class="mb-3 w-full">
-                    <select v-model="project.status_id"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      @change="openModal('status', project, $event.target.value)" small>
-                      <option v-for="status in statusList" :key="status.id" :value="status.id">
-                        {{ status.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="flex-1">
-                  <div class="mb-1 w-full">
-                    <b>Priority</b>
-                  </div>
-                  <div class="mb-3 w-full">
-                    <select v-model="project.priority_id"
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      @change="openModal('priority', project, $event.target.value)" small>
-                      <option v-for="priority in priorityList" :key="priority.id" :value="priority.id">
-                        {{ priority.name }}
-                      </option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="flex-1">
-                  <div class="mb-3 w-full">
-                    <b>Start Date</b>
-                  </div>
-                  <div class="mb-3 w-full">
-                    {{ project.start_date }}
-                  </div>
-                </div>
-
-                <div class="flex-1">
-                  <div class="mb-3 w-full">
-                    <b>End Date</b>
-                  </div>
-                  <div class="mb-3 w-full">
-                    {{ project.end_date !== null ? project.end_date : '-' }}
-                  </div>
-                </div>
-
-                <div class="flex-1">
-                  <div class="mb-3 w-full">
-                    <b>Created By</b>
-                  </div>
-                  <div class="mb-3 w-full whitespace-nowrap">
-                    {{ project.userDetails.name }}
-                  </div>
-                </div>
-                <div class="flex-1">
-                  <div class="mb-1 w-full">
-                    <b>Assigned To</b>
-                  </div>
-                  <div class="mb-3 w-full">
-                    <select v-if="userList[0]"
-                      class="select-box bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      v-model="project.assigned_to_user_id"
-                      @change="openModal('assigned_to', project, $event.target.value)" small>
-                      <option value="">Unassign User</option>
-                      <option v-for="user in userList" :key="user.id" :value="user.id">
-                        <span v-if="user.id !== 'all'">{{ user.email }}</span>
-                      </option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <div class="mb-1 w-full"><b>&nbsp;</b></div>
-                  <BaseButton
-                    color="danger"
-                    :icon="mdiTrashCan"
-                    small
-                    @click="openModal('delete', project, $event.target.value)"
-                  />
-                </div>
-              </div>
-
-              <div class="flex-1 gap-6 mb-3">
-                <div class="mb-2 w-full">
-                  <label><b>Progress</b></label>
-                </div>
-              </div>
-
-              <div class="flex-1 mb-6">
-                <progress class="flex w-2/5 self-center lg:w-full" max="100" :value="project.progress">
-                  {{ project.progress }}
-                </progress>
-              </div>
-
-              <div class="flex-1 gap-6 mb-1">
-                <div class="mb-2 w-full">
-                  <label><b>Description</b></label>
-                </div>
-              </div>
-
-              <div class="flex-1">
-                {{ project.description }}
-              </div>
-            </div>
-          </CardBox> -->
           <CardBox :key="project.id">
             <div class="flex flex-col gap-6">
               <div class="flex flex-col sm:flex-row gap-6">
@@ -478,7 +369,6 @@ const submitComment = async () => {
             </div>
           </CardBox>
 
-
           <CardBox v-for="(history, date) in projectHistoryGroupByDate" :key="date" class="text-justify">
             <div v-for="(h, index) in history" :key="h.id" class="flex flex-row gap-6">
               <div class="flex-1 gap-6 mb-3">
@@ -501,27 +391,8 @@ const submitComment = async () => {
                 <div v-show="h.comment_id !== undefined">
                   <b>Comment</b> - <span class="bold">{{ projectCommentList.find(comment => comment.id === h.comment_id)?.comment_text || 'Comment not found' }}</span>
                 </div>
-                <!-- <div v-if="typeof h.name !== 'undefined'"><b>Project Name</b> - {{ h.name }}</div>
-                <div v-if="typeof h.description !== 'undefined'">{{ `Description - ${h.description}` }}</div>
-                <div v-if="typeof h.status_id !== 'undefined'">
-                  Status updated to - {{ statusList.find(status => status.id === h.status_id)?.name || 'Status not found' }}
-                </div>
-                <div v-if="typeof h.priority_id !== 'undefined'">
-                  Priority updated to - {{ priorityList.find(priority => priority.id === h.priority_id)?.name || 'Priority not found' }}
-                </div>
-                <div v-if="typeof h.start_date !== 'undefined'">{{ `Start Date - ${h.start_date}` }}</div>
-                <div v-if="typeof h.end_date !== 'undefined'">{{ `End Date - ${h.end_date}` }}</div>
-                <div v-if="h.estimated_hours > 0">{{ `Estimated hours - ${h.estimated_hours} hrs` }}</div>
-                <div v-if="h.spent_hours > 0">{{ `Spent hours - ${h.spent_hours} hrs` }}</div>
-                <div v-if="h.progress > 0">{{ `Progress - ${h.progress}` }}</div>
-                <div v-if="typeof h.assigned_to_user_id !== 'undefined'">
-                  Assigned To - {{ userList.find(user => user.id === h.assigned_to_user_id)?.name || 'User not found' }}
-                </div>
-                <div v-if="typeof h.comment_id !== 'undefined'">
-                  Comment - {{ projectCommentList.find(comment => comment.id === h.comment_id)?.comment_text || 'Comment not found' }}
-                </div> -->
 
-                <div v-if="typeof h.attachment_id !== 'undefined'">
+                <div v-if="h.attachment_id !== undefined">
                   <template v-if="projectAttachmentList.find(attachment => attachment.id === h.attachment_id)">
                     <a v-if="isImageFile(projectAttachmentList.find(attachment => attachment.id === h.attachment_id)?.file_name)"
                       :href="'http://localhost:8000/assets/' + project.id + '/' + projectAttachmentList.find(attachment => attachment.id === h.attachment_id)?.file_name"
