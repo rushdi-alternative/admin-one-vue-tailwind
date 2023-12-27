@@ -1,4 +1,5 @@
 import axios from '../plugins/axios';
+import axiosMultipart from '../plugins/axiosMultipart';
 import { defineStore } from "pinia";
 
 export const useTaskStore = defineStore("task", {
@@ -34,6 +35,14 @@ export const useTaskStore = defineStore("task", {
         return error.response.data;
       }
     },
+    async viewTask(apiBaseUrl, id) {
+      try {
+        const response = await axios.get(`${apiBaseUrl}task/${id}`);
+        return response.data;
+      } catch (error) {
+        return error.response.data;
+      }
+    },
     async createTask(apiBaseUrl, form) {
       try {
         const response = await axios.post(`${apiBaseUrl}task`, form);
@@ -61,22 +70,24 @@ export const useTaskStore = defineStore("task", {
 
     async addCommentToTask(apiBaseUrl, filters, id) {
       try {
+        console.log('hello');
         const response = await axiosMultipart.post(`${apiBaseUrl}task/${id}/add-comment`, filters);
+        console.log(response);
         return response;
       } catch (error) {
-        return error.response.data;
+        return error.response;
       }
     },
 
-    async addMemberToProject(apiBaseUrl, filters) {
-      //filters {project_id, user_id, created_by}
-      try {
-        const response = await axios.post(`${apiBaseUrl}task/member`, filters);
-        return response;
-      } catch (error) {
-        return error.response.data;
-      }
-    },
+    // async addMemberToTask(apiBaseUrl, filters) {
+    //   //filters {project_id, user_id, created_by}
+    //   try {
+    //     const response = await axios.post(`${apiBaseUrl}task/member`, filters);
+    //     return response;
+    //   } catch (error) {
+    //     return error.response.data;
+    //   }
+    // },
   },
 });
 

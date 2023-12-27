@@ -7,6 +7,7 @@ import { useStyleStore } from "@/stores/style.js";
 import { darkModeKey, styleKey } from "@/config.js";
 
 import "./css/main.css";
+import "./css/jkanban.min.css";
 import { styles } from "./commons/constant";
 
 /* Init Pinia */
