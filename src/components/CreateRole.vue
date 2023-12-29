@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { inject, ref } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import FormField from "./FormField.vue";
 import FormControl from "./FormControl.vue";
@@ -11,6 +11,8 @@ import SectionTitleLineWithButton from "./SectionTitleLineWithButton.vue";
 import { mdiBriefcase, mdiMagnify } from "@mdi/js";
 
 const roleStore = useRoleStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const isLoading = ref(false);
 
@@ -58,7 +60,7 @@ const submitForm = async () => {
       name: newRoleName.value,
       permissions: checkedValues
     };
-    const response = await roleStore.createRole(formFilters);
+    const response = await roleStore.createRole(apiBaseUrl, formFilters);
 
     if(response.status === 201) {
       successMessage.value = response.data.message;

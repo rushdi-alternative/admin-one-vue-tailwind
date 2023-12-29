@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, inject } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import FormField from "./FormField.vue";
 import FormControl from "./FormControl.vue";
@@ -13,6 +13,8 @@ import { mdiMagnify, mdiTableBorder } from "@mdi/js";
 
 const roleStore = useRoleStore();
 const userStore = useUserStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const isLoading = ref(false);
 
@@ -45,7 +47,7 @@ const hasAccessToCreateUser = permissionsToUserAdd.some(permission => currentUse
 async function fetchRoles() {
   isLoading.value  = true;
   try {
-    const response = await roleStore.roles({ all: true });
+    const response = await roleStore.roles(apiBaseUrl, { all: true });
     roleList.value = response.data;
     const filteredRoles = roleList.value.filter((role) => role.is_user === 1);
     filteredRoleList.value = currentUserPermissions.includes('admin') ? filteredRoles : filteredRoles.filter(role => currentUserOnlyAddPermissions.includes(role.name));
@@ -125,7 +127,7 @@ const submitForm = async () => {
       role: selectedRole.value
     };
     removeNullProperties(formFilters);
-    const response = await userStore.createUser(formFilters);
+    const response = await userStore.createUser(apiBaseUrl, formFilters);
 
     if(response.status === 201) {
       successMessage.value = response.data.message;

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, watch, nextTick } from "vue";
+import { computed, ref, onMounted, watch, nextTick, inject } from "vue";
 import BaseLevel from "@/components/BaseLevel.vue";
 import BaseButtons from "@/components/BaseButtons.vue";
 import BaseButton from "@/components/BaseButton.vue";
@@ -14,6 +14,8 @@ import CardBoxModal from "./CardBoxModal.vue";
 const roleStore = useRoleStore();
 const userStore = useUserStore();
 const excludedRoleNames = ref(['admin', 'manager', 'employee', 'user-own', 'projects', 'tasks', 'roles', 'permissions' ]);
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const modalChangeType = ref("");
 const currentRole = ref(null);
@@ -51,7 +53,8 @@ const goToPage = (page) => {
 async function fetchRoles(filters) {
   isLoading.value = true;
   try {
-    const response = await roleStore.roles({
+    const response = await roleStore.roles(
+      apiBaseUrl, {
       ...filters,
       limit: perPage.value,
       offset: currentPage.value * perPage.value,
@@ -73,7 +76,7 @@ async function fetchRoles(filters) {
 async function fetchAllUsers() {
   isLoading.value = true;
   try {
-    const response = await userStore.allUsers();
+    const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -104,7 +107,7 @@ watch(perPage, async () => {
 
 onMounted(async () => {
   await fetchAllUsers();
-  await fetchRoles({'sort': ['id:desc'] });
+  await fetchRoles(apiBaseUrl, {'sort': ['id:desc'] });
 
 });
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, inject, ref } from "vue";
 import { mdiClose } from "@mdi/js";
 import BaseButton from "@/components/BaseButton.vue";
 import BaseButtons from "@/components/BaseButtons.vue";
@@ -9,10 +9,14 @@ import CardBoxComponentTitle from "@/components/CardBoxComponentTitle.vue";
 import { useProjectStore } from "@/stores/project";
 import { useUserStore } from "@/stores/user";
 import { useRoleStore } from "@/stores/role";
+import { useTaskStore } from "@/stores/task";
 
+const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 const userStore = useUserStore();
 const roleStore = useRoleStore();
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const props = defineProps({
   title: {
@@ -58,7 +62,7 @@ const confirm = async () => {
   try {
     if (props.modalType === 'project') {
       if (props.change === 'delete') {
-        const response = await projectStore.deleteProject(props.id);
+        const response = await projectStore.deleteProject(apiBaseUrl, props.id);
         props.callback(response);
         return response;
       } else {
@@ -71,7 +75,26 @@ const confirm = async () => {
               : 'assigned_to_user_id'
           ] = props.referenceId;
 
-        const response = await projectStore.updateProject(data, props.id);
+        const response = await projectStore.updateProject(apiBaseUrl, data, props.id);
+        props.callback(response);
+        return response;
+      }
+    } else if (props.modalType === 'task') {
+      if (props.change === 'delete') {
+        const response = await taskStore.deleteTask(apiBaseUrl, props.id);
+        props.callback(response);
+        return response;
+      } else {
+        const data = {};
+        data[
+          props.change == 'status'
+            ? 'status_id'
+            : props.change == 'priority'
+              ? 'priority_id'
+              : 'assigned_to_user_id'
+          ] = props.referenceId;
+
+        const response = await taskStore.updateTask(apiBaseUrl, data, props.id);
         props.callback(response);
         return response;
       }
@@ -79,16 +102,16 @@ const confirm = async () => {
       const data = {};
 
       if (props.change === 'status') {
-        const response = await userStore.activateDeactivateUser(props.id);
+        const response = await userStore.activateDeactivateUser(apiBaseUrl, props.id);
         props.callback(response);
         return response;
       } else if (props.change === 'role') {
         data['role_id'] = props.referenceId;
-        const response = await userStore.updateUserRole(data, props.id);
+        const response = await userStore.updateUserRole(apiBaseUrl, data, props.id);
         props.callback(response);
         return response;
       } else if (props.change === 'delete') {
-        const response = await userStore.deleteUser(props.id);
+        const response = await userStore.deleteUser(apiBaseUrl, props.id);
         props.callback(response);
         return response;
       } else {
@@ -100,11 +123,11 @@ const confirm = async () => {
       if (props.change === 'is_user') {
 
         data[props.change] = props.referenceId;
-        const response = await roleStore.updateRole(data, props.id);
+        const response = await roleStore.updateRole(apiBaseUrl, data, props.id);
         props.callback(response);
         return response;
       } else if (props.change === 'delete') {
-        const response = await roleStore.deleteRole(props.id);
+        const response = await roleStore.deleteRole(apiBaseUrl, props.id);
         props.callback(response);
         return response;
       } else {

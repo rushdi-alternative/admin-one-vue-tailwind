@@ -15,9 +15,9 @@ export const useAuthStore = defineStore("auth", {
     permissions: [],
   }),
   actions: {
-    async login({ email, password }) {
+    async login({ apiBaseUrl, email, password }) {
       try {
-        const response = await axios.post('/login', { email, password });
+        const response = await axios.post(`${apiBaseUrl}login`, { email, password });
         const { user, token } = response.data;
 
         localStorage.setItem('token', token);
@@ -32,33 +32,33 @@ export const useAuthStore = defineStore("auth", {
         return error.response.data;
       }
     },
-    async logout() {
+    async logout(apiBaseUrl) {
       try {
-        const response = await axios.post('/logout', null);
+        await axios.post(`${apiBaseUrl}logout`, null);
         console.log('response')
       } catch (error) {
         console.log(error.response.data.message)
       }
 
-      const darkMode = localStorage.getItem(darkModeKey);
-      const style = localStorage.getItem(styleKey);
+      // const darkMode = localStorage.getItem(darkModeKey);
+      // const style = localStorage.getItem(styleKey);
 
-      const keysToPreserve = [darkModeKey, styleKey];
-      Object.keys({}).forEach(key => {
-        if (!keysToPreserve.includes(key)) {
-          delete state[key];
-        }
-      });
+      // const keysToPreserve = [darkModeKey, styleKey];
+      // Object.keys({}).forEach(key => {
+      //   if (!keysToPreserve.includes(key)) {
+      //     delete state[key];
+      //   }
+      // });
       localStorage.clear();
 
-      if (style !== null) {
-        localStorage.setItem(styleKey, style);
-      }
-      if (darkMode !== null) {
-        localStorage.setItem(darkModeKey, darkMode);
-      } else {
-        localStorage.setItem(darkModeKey, style === null || style === 'white' ? 0 : 1);
-      }
+      // if (style !== null) {
+      //   localStorage.setItem(styleKey, style);
+      // }
+      // if (darkMode !== null) {
+      //   localStorage.setItem(darkModeKey, darkMode);
+      // } else {
+      //   localStorage.setItem(darkModeKey, style === null || style === 'white' ? 0 : 1);
+      // }
     },
     async resetState() {
       const darkMode = localStorage.getItem(darkModeKey);

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, inject } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import { useStatusStore } from "@/stores/status";
 import { usePriorityStore } from "@/stores/priorities";
@@ -8,24 +8,67 @@ import FormControl from "./FormControl.vue";
 import BaseButtons from "./BaseButtons.vue";
 import BaseButton from "./BaseButton.vue";
 import { useProjectStore } from "@/stores/project";
+import { useUserStore } from "@/stores/user";
+import { useTaskStore } from "@/stores/task";
+import { removeNullProperties } from "@/commons/constant";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const statusStore = useStatusStore();
 const priorityStore = usePriorityStore();
 const projectStore = useProjectStore();
+const userStore = useUserStore();
+const taskStore = useTaskStore();
+
+
+const apiBaseUrl = inject('apiBaseUrl');
 
 const isLoading = ref(true);
 
+const userList = ref([]);
 const statusList = ref([]);
 const priorityList = ref([]);
 const projectList = ref([]);
 
+const errorMessage = ref('');
+const errorName = ref('');
+const errorEstimatedHours = ref('');
+const errorSpentHours = ref('');
+
+const name = ref(null);
+const description = ref(null);
 const startDate = ref(null);
 const endDate = ref(null);
+const estimatedHours = ref(null);
+const spentHours = ref(null);
+const assignedTo = ref(null);
+
+const defaultName = ref('');
+const defaultDescription = ref('');
+const defaultStartDate = ref(null);
+const defaultEndDate = ref(null);
+const defaultEstimatedHours = ref('');
+const defaultSpentHours = ref('');
+const defaultAssignedTo = ref(null);
+
+async function fetchUsers() {
+  isLoading.value = true;
+  try {
+    const response = await userStore.allUsers(apiBaseUrl);
+    userList.value = response.users;
+  } catch (error) {
+    console.error("An error occurred:", error);
+    throw error;
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 async function fetchStatus() {
   isLoading.value  = true;
   try {
-    const response = await statusStore.statuses({ all: true });
+    const response = await statusStore.statuses(apiBaseUrl, { all: true });
     statusList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -38,7 +81,7 @@ async function fetchStatus() {
 async function fetchPriorities() {
   isLoading.value  = true;
   try {
-    const response = await priorityStore.priorities({ all: true });
+    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
     priorityList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -53,6 +96,7 @@ async function fetchProjects() {
   isLoading.value  = true;
   try {
     const response = await projectStore.projectNames(
+      apiBaseUrl,
       {
         status: accesptedStatusList,
         all: true
@@ -69,6 +113,7 @@ async function fetchProjects() {
 }
 
 onMounted(() => {
+  fetchUsers();
   fetchStatus();
   fetchPriorities();
   fetchProjects();
@@ -83,11 +128,80 @@ onMounted(() => {
   const nextYear = nextMonth.getFullYear();
   const nextMonthFormatted = String(nextMonth.getMonth() + 1).padStart(2, '0');
   endDate.value = `${nextYear}-${nextMonthFormatted}-${day}`;
+
+  defaultName.value = '';
+  defaultDescription.value = '';
+  defaultStartDate.value = startDate.value;
+  defaultEndDate.value = endDate.value;
+  defaultAssignedTo.value = null;
 });
 
 const handleCallback = (result) => {
   console.log("Handle Call Back");
   return null;
+};
+
+const resetForm = () => {
+
+  name.value = defaultName.value;
+  description.value = defaultDescription.value;
+  startDate.value = defaultStartDate.value;
+  endDate.value = defaultEndDate.value;
+  estimatedHours.value = defaultEstimatedHours.value;
+  spentHours.value = defaultSpentHours.value;
+  assignedTo.value = defaultAssignedTo.value;
+
+  const statusSelect = document.getElementById("status_id");
+  if (statusSelect) {
+    statusSelect.selectedIndex = 0;
+  }
+
+  const prioritySelect = document.getElementById("priority_id");
+  if (prioritySelect) {
+    prioritySelect.selectedIndex = 0;
+  }
+
+  const projectSelect = document.getElementById("project_id");
+  if (projectSelect) {
+    projectSelect.selectedIndex = 0;
+  }
+};
+
+const submitForm = async () => {
+  errorName.value = '';
+  errorEstimatedHours.value = '';
+  errorSpentHours.value = '';
+
+  if (!name.value ) {
+    errorName.value = "You need to specify a task name to create a task";
+    return;
+  }
+
+  try {
+    const statusSelect = document.getElementById("status_id");
+    const prioritySelect = document.getElementById("priority_id");
+    const projectSelect = document.getElementById("project_id");
+    const formFilters = {
+      name: name.value,
+      description: description.value,
+      start_date: startDate.value,
+      end_date: endDate.value,
+      estimated_hours: estimatedHours.value,
+      spent_hours: spentHours.value,
+      assigned_to_user_id: assignedTo.value,
+      priority_id:prioritySelect.value,
+      status_id:statusSelect.value,
+      project_id:projectSelect.value,
+    };
+
+    // console.log(formFilters)
+
+    removeNullProperties(formFilters);
+    const response = await taskStore.createTask(apiBaseUrl, formFilters);
+    router.push(`/task/${response.data.data.id}`);
+  } catch (error) {
+    errorMessage.value = "An error occurred while submitting the form.";
+  }
 };
 </script>
 
@@ -100,11 +214,17 @@ const handleCallback = (result) => {
   <div v-else>
     <div class="grid">
       <CardBox form @submit.prevent="submit">
-        <FormField label="Task Name">
-          <FormControl type="text" />
+        <div class="mb-3">
+          <div v-if="errorMessage" class="text-red-500">{{ errorMessage }}</div>
+          <div v-if="errorName" class="text-red-500">{{ errorName }}</div>
+          <b><label for="name" class="required">Task Name</label></b>
+        </div>
+        <FormField>
+            <FormControl class="" id="name" type="text" v-model="name" placeholder="Name your new Task" />
         </FormField>
         <FormField label="Related Project">
           <select
+            id="project_id"
             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             small
           >
@@ -134,6 +254,7 @@ const handleCallback = (result) => {
         <FormField>
           <FormField label="Status">
             <select
+              id="status_id"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               small
             >
@@ -148,6 +269,7 @@ const handleCallback = (result) => {
           </FormField>
           <FormField label="Priority">
             <select
+              id="priority_id"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               small
             >
@@ -161,14 +283,24 @@ const handleCallback = (result) => {
             </select>
           </FormField>
         </FormField>
-        <FormField label="Assign to">
-          <input type="search" class="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-r-lg border-l-gray-50 border-l-2 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-l-gray-700  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500" placeholder="type at least 3 characters to find a user email" required>
+        <FormField label="Assign User to this Project">
+          <select
+            v-if="userList[0]"
+            id="assigned_to_user_id"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            v-model="assignedTo"
+            small
+          >
+          <option v-for="user in userList" :key="user.id" :value="user.id">
+            <span v-if="user.id !== 'all'">{{ user.email }}</span>
+          </option>
+          </select>
         </FormField>
 
         <template #footer>
           <BaseButtons>
-            <BaseButton type="submit" color="info" label="Submit" />
-            <BaseButton type="reset" color="info" outline label="Reset" />
+            <BaseButton type="submit" color="info" label="Submit" @click="submitForm" />
+            <BaseButton type="reset" color="info" outline label="Reset" @click="resetForm" />
           </BaseButtons>
         </template>
       </CardBox>

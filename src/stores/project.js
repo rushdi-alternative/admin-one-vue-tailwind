@@ -24,97 +24,98 @@ export const useProjectStore = defineStore("project", {
       return queryParams.join("&");
     },
 
-    async allProjects() {
+    async allProjects(apiBaseUrl) {
       try {
-        const response = await axios.get(`/all-projects`);
+        const response = await axios.get(`${apiBaseUrl}all-projects`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async viewProject(id) {
+    async viewProject(apiBaseUrl, id) {
       try {
-        const response = await axios.get(`/project/${id}`);
+        const response = await axios.get(`${apiBaseUrl}project/${id}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async projectsSummary(filters) {
+    async projectsSummary(apiBaseUrl, filters) {
+      console.log(filters);
       try {
-        const response = await axios.get(`/projects-summary?${this.objectToQueryParams(filters)}`);
+        const response = await axios.get(`${apiBaseUrl}projects-summary?${this.objectToQueryParams(filters)}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async projectNames(filters) {
+    async projectNames(apiBaseUrl, filters) {
       try {
         const queryString = Object.entries(filters)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
-        const response = await axios.get(`/project-names?${queryString}`);
+        const response = await axios.get(`${apiBaseUrl}project-names?${queryString}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async projects(filters) {
+    async projects(apiBaseUrl, filters) {
       try {
         const queryString = Object.entries(filters)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
-        const response = await axios.get(`/projects?${queryString}`);
+        const response = await axios.get(`${apiBaseUrl}projects?${queryString}`);
         return response.data;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async updateProject(filters, id) {
+    async updateProject(apiBaseUrl, filters, id) {
       try {
-        const response = await axios.put(`/project/${id}`, filters);
+        const response = await axios.put(`${apiBaseUrl}project/${id}`, filters);
         return response;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async createProject(form) {
+    async createProject(apiBaseUrl, form) {
       try {
-        const response = await axios.post(`/project`, form);
+        const response = await axios.post(`${apiBaseUrl}project`, form);
         return response;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async deleteProject(id) {
+    async deleteProject(apiBaseUrl, id) {
       try {
-        const response = await axios.delete(`/project/${id}`);
+        const response = await axios.delete(`${apiBaseUrl}project/${id}`);
         return response;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async addCommentToProject(filters, id) {
+    async addCommentToProject(apiBaseUrl, filters, id) {
       try {
-        const response = await axiosMultipart.post(`/project/${id}/add-comment`, filters);
+        const response = await axiosMultipart.post(`${apiBaseUrl}project/${id}/add-comment`, filters);
         return response;
       } catch (error) {
         return error.response.data;
       }
     },
 
-    async addMemberToProject(filters) {
+    async addMemberToProject(apiBaseUrl, filters) {
       //filters {project_id, user_id, created_by}
       try {
-        const response = await axios.post(`/project/member`, filters);
+        const response = await axios.post(`${apiBaseUrl}project/member`, filters);
         return response;
       } catch (error) {
         return error.response.data;

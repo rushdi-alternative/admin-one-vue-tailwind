@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from "vue";
+import { reactive, inject } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth.js";
 import { mdiAccount, mdiAsterisk } from "@mdi/js";
@@ -16,7 +16,7 @@ import { createPinia } from "pinia";
 const pinia = createPinia();
 const authStore = useAuthStore(pinia);
 
-
+const apiBaseUrl = inject('apiBaseUrl');
 const form = reactive({
   email: "",
   password: "",
@@ -28,7 +28,7 @@ const router = useRouter();
 
 async function logout() {
   try {
-    authStore.logout();
+    authStore.logout(apiBaseUrl);
   } catch (error) {
     console.error('An error occurred:', error);
     throw error;
@@ -50,12 +50,14 @@ const submit = async () => {
 
   try {
     const response = await authStore.login({
+      apiBaseUrl: apiBaseUrl,
       email: form.email,
       password: form.password,
     });
 
     if(typeof response === 'boolean') {
-      router.push("/dashboard");
+      window.location.href = '/dashboard';
+      // router.push("/dashboard");
     } else {
       let errorMsg = "Something went wrong while trying to log in. Please check your credentials";
       if (typeof response.error === 'string') {

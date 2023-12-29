@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, watch, nextTick } from "vue";
+import { computed, ref, onMounted, watch, nextTick, inject } from "vue";
 import CardBoxModalStateChanging from "@/components/CardBoxModalStateChanging.vue";
 import TableCheckboxCell from "@/components/TableCheckboxCell.vue";
 import CardBox from "@/components/CardBox.vue";
@@ -18,6 +18,7 @@ import { permissionsToPermissionAdd, permissionsToPermissionDelete, perPageOptio
 const permissionStore = usePermissionStore();
 const userStore = useUserStore();
 const excludedPermissionNames = ref(['admin', 'manager:view', 'employee:view', 'user-own:view', 'projects:view', 'tasks:view', 'roles:view', 'permissions:view' ]);
+const apiBaseUrl = inject('apiBaseUrl');
 
 const currentUserPermissions = JSON.parse(localStorage.getItem('permissions'));
 const hasAccessToPermissionCreate = currentUserPermissions !== null && permissionsToPermissionAdd.some(permission => currentUserPermissions.includes(permission));
@@ -59,7 +60,7 @@ const goToPage = (page) => {
 async function fetchPermissions(filters) {
   isLoading.value = true;
   try {
-    const response = await permissionStore.permissions({
+    const response = await permissionStore.permissions(apiBaseUrl, {
       ...filters,
       limit: perPage.value,
       offset: currentPage.value * perPage.value,
@@ -81,7 +82,7 @@ async function fetchPermissions(filters) {
 async function fetchAllUsers() {
   isLoading.value = true;
   try {
-    const response = await userStore.allUsers();
+    const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
   } catch (error) {
     console.error("An error occurred:", error);

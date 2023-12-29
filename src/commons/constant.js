@@ -110,9 +110,16 @@ export const permissionsToAddMembersProject = ['admin', 'projects-member:add'];
 export const permissionsToViewMembersProject = ['admin', 'projects-member:view'];
 export const permissionsToDeleteMembersProject = ['admin', 'projects-member:delete'];
 
-
 export const permissionsToPermissionAdd = ['admin', 'permissions:add'];
 export const permissionsToPermissionView = ['admin', 'permissions:view'];
 export const permissionsToPermissionEdit = ['admin', 'permissions:edit'];
 export const permissionsToPermissionDelete = ['admin', 'permissions:delete'];
 
+export const permissionsToTaskAdd = ['admin', 'tasks:add'];
+export const permissionsToTaskView = ['admin', 'tasks:view'];
+export const permissionsToTaskEdit = ['admin', 'tasks:edit'];
+export const permissionsToTaskDelete = ['admin', 'tasks:delete'];
+
+export const permissionsToAddMembersTask = ['admin', 'tasks-member:add'];
+export const permissionsToViewMembersTask = ['admin', 'tasks-member:view'];
+export const permissionsToDeleteMembersTask = ['admin', 'tasks-member:delete'];

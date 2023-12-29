@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { inject, onMounted, ref, watch } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import FormControl from "./FormControl.vue";
 import BaseButtons from "./BaseButtons.vue";
@@ -16,6 +16,8 @@ import { useUserStore } from "@/stores/user";
 const projectStore = useProjectStore();
 const userStore = useUserStore();
 
+const apiBaseUrl = inject('apiBaseUrl');
+
 const isLoading = ref(false);
 
 const newPermissionName = ref('');
@@ -30,7 +32,7 @@ const userList = ref(null);
 async function fetchAllProjects() {
   isLoading.value = true;
   try {
-    const response = await projectStore.allProjects();
+    const response = await projectStore.allProjects(apiBaseUrl);
     projectList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -43,7 +45,7 @@ async function fetchAllProjects() {
 async function fetchAllUsers() {
   isLoading.value = true;
   try {
-    const response = await userStore.allUsers();
+    const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
   } catch (error) {
     console.error("An error occurred:", error);
@@ -87,7 +89,7 @@ const submitForm = async () => {
       project_id: selectedProject.value,
       userid:selectedUser.value
     };
-    const response = await projectStore.addMemberToProject(formFilters);
+    const response = await projectStore.addMemberToProject(apiBaseUrl, formFilters);
 
     if(response.status === 201) {
       successMessage.value = response.data.message;

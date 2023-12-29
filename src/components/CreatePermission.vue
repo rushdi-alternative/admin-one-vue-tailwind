@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { inject, onMounted, ref, watch } from "vue";
 import CardBox from "@/components/CardBox.vue";
 import FormControl from "./FormControl.vue";
 import BaseButtons from "./BaseButtons.vue";
@@ -11,6 +11,7 @@ import SectionTitleLineWithButton from "./SectionTitleLineWithButton.vue";
 import { mdiBriefcase, mdiMagnify } from "@mdi/js";
 import FormField from "./FormField.vue";
 
+const apiBaseUrl = inject('apiBaseUrl');
 const roleStore = useRoleStore();
 const permissionStore = usePermissionStore();
 
@@ -27,7 +28,7 @@ const roleList = ref(null);
 async function fetchAllRoles() {
   isLoading.value = true;
   try {
-    const response = await roleStore.allRoles();
+    const response = await roleStore.allRoles(apiBaseUrl);
     roleList.value = response.data.filter((role) => role.name !== 'admin');
   } catch (error) {
     console.error("An error occurred:", error);
@@ -74,7 +75,7 @@ const submitForm = async () => {
     const formFilters = {
       name: `${selectedRole.value}:${newPermissionName.value}`
     };
-    const response = await permissionStore.createPermission(formFilters);
+    const response = await permissionStore.createPermission(apiBaseUrl, formFilters);
 
     if(response.status === 201) {
       successMessage.value = response.data.message;

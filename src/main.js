@@ -7,13 +7,17 @@ import { useStyleStore } from "@/stores/style.js";
 import { darkModeKey, styleKey } from "@/config.js";
 
 import "./css/main.css";
+import "./css/jkanban.min.css";
 import { styles } from "./commons/constant";
 
 /* Init Pinia */
 const pinia = createPinia();
 
 /* Create Vue app */
-createApp(App).use(router).use(pinia).mount("#app");
+const app = createApp(App);
+// app.provide('apiBaseUrl', '/');
+app.provide('apiBaseUrl', 'http://localhost:8000/api/');
+app.use(router).use(pinia).mount("#app");
 
 /* Init Pinia stores */
 const styleStore = useStyleStore(pinia);

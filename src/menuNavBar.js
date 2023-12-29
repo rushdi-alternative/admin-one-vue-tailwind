@@ -185,12 +185,12 @@ menuItems.push(
     isDesktopNoLabel: true,
     isToggleLightDark: true,
   },
-  {
-    icon: mdiLogout,
-    label: "Log out",
-    isDesktopNoLabel: true,
-    isLogout: true,
-  }
+  // {
+  //   icon: mdiLogout,
+  //   label: "Log out",
+  //   isDesktopNoLabel: true,
+  //   isLogout: true,
+  // }
 );
 
 export default menuItems;
