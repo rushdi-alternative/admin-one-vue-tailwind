@@ -26,7 +26,7 @@ const priorityStore = usePriorityStore();
 const userStore = useUserStore();
 
 const apiBaseUrl = inject('apiBaseUrl');
-const apiBaseAssetsUrl = apiBaseUrl.replace('api', 'assets');
+const apiBaseAssetsUrl = apiBaseUrl.replace('api', 'storage/assets/projects');
 
 const modalChangeType = ref("");
 const currentProject = ref(null);

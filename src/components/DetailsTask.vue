@@ -24,7 +24,7 @@ const priorityStore = usePriorityStore();
 const userStore = useUserStore();
 
 const apiBaseUrl = inject('apiBaseUrl');
-const apiBaseAssetsUrl = apiBaseUrl.replace('api', 'assets/tasks');
+const apiBaseAssetsUrl = apiBaseUrl.replace('api', 'storage/assets/tasks');
 
 const modalChangeType = ref("");
 const currentTask = ref(null);
