@@ -14,7 +14,7 @@ const hasAccessToAddMemberToProject = currentUserPermissions !== null && permiss
   <LayoutAuthenticated>
     <SectionMain>
       <CreateMemberToProject v-if="hasAccessToAddMemberToProject" />
-      <NoAccess v-if="!hasAccessToAddMemberToProject" label="add member the project" />
+      <NoAccess v-if="!hasAccessToAddMemberToProject" label="add member to the project" />
     </SectionMain>
   </LayoutAuthenticated>
 </template>

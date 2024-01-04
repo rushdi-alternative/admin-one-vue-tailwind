@@ -406,14 +406,14 @@ const submitComment = async () => {
           </CardBox>
           <CardBox form @submit.prevent="submitComment">
             <div v-if="errorMsg" class="text-red-500">{{ errorMsg }}</div>
-            <div class="flex-1 w-full">
+            <!-- <div class="flex-1 w-full">
               <label for="completed_progress" class="p-2">Update Task Name: </label>
               <FormControl class="flex-1 mb-3" v-model="newName" placeholder="Update the task Name" />
             </div>
             <div class="flex-1 w-full">
               <label for="completed_progress" class="p-2">Update Task Description: </label>
               <FormControl class="flex-1 mb-3" type="textarea" v-model="newDescription" placeholder="Update the task Description" />
-            </div>
+            </div> -->
             <div class="flex flex-col sm:flex-row mb-3 gap-6">
               <div class="flex-1 w-full">
                 <label for="completed_progress" class="p-2">Completed: </label>

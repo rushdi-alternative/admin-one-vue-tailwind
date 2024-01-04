@@ -4,16 +4,14 @@ import CardBox from "@/components/CardBox.vue";
 import FormControl from "./FormControl.vue";
 import BaseButtons from "./BaseButtons.vue";
 import BaseButton from "./BaseButton.vue";
-import { regexWithoutSpace, handleError } from "@/commons/constant";
-import { useRoleStore } from "@/stores/role";
-import { usePermissionStore } from "@/stores/permission";
+import { handleError } from "@/commons/constant";
 import SectionTitleLineWithButton from "./SectionTitleLineWithButton.vue";
 import { mdiBriefcase, mdiMagnify } from "@mdi/js";
 import FormField from "./FormField.vue";
-import { useProjectStore } from "@/stores/project";
 import { useUserStore } from "@/stores/user";
+import { useTaskStore } from "@/stores/task";
 
-const projectStore = useProjectStore();
+const taskStore = useTaskStore();
 const userStore = useUserStore();
 
 const apiBaseUrl = inject('apiBaseUrl');
@@ -23,17 +21,17 @@ const isLoading = ref(false);
 const newPermissionName = ref('');
 const defaultPermissionName = ref('');
 
-const selectedProject = ref(null);
+const selectedTask = ref(null);
 const selectedUser = ref(null);
 
-const projectList = ref(null);
+const taskList = ref(null);
 const userList = ref(null);
 
-async function fetchAllProjects() {
+async function fetchAllTasks() {
   isLoading.value = true;
   try {
-    const response = await projectStore.allProjects(apiBaseUrl);
-    projectList.value = response.data;
+    const response = await taskStore.allTasks(apiBaseUrl);
+    taskList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
     throw error;
@@ -57,7 +55,7 @@ async function fetchAllUsers() {
 
 onMounted( async () => {
   await fetchAllUsers();
-  await fetchAllProjects();
+  await fetchAllTasks();
 });
 
 const resetForm = () => {
@@ -73,8 +71,8 @@ const submitForm = async () => {
   errorName.value = '';
   successMessage.value = '';
 
-  if (selectedProject.value === null) {
-    errorName.value = "Project should be selected to proceed";
+  if (selectedTask.value === null) {
+    errorName.value = "Task should be selected to proceed";
     return;
   }
 
@@ -83,13 +81,12 @@ const submitForm = async () => {
     return;
   }
 
-
   try {
     const formFilters = {
-      project_id: selectedProject.value,
+      task_id: selectedTask.value,
       userid:selectedUser.value
     };
-    const response = await projectStore.addMemberToProject(apiBaseUrl, formFilters);
+    const response = await taskStore.addMemberToTask(apiBaseUrl, formFilters);
 
     if(response.status === 201) {
       successMessage.value = response.data.message;
@@ -99,7 +96,7 @@ const submitForm = async () => {
     }
 
   } catch (error) {
-    errorMessage.value = "An error occurred while assigning a member to the project.";
+    errorMessage.value = "An error occurred while assigning a member to the task.";
     if (error.name !== 'undefined') {
       errorMessage.value = error.name;
     }
@@ -116,11 +113,11 @@ const submitForm = async () => {
   </div>
   <div v-else>
     <div class="grid">
-      <SectionTitleLineWithButton :icon="mdiBriefcase" title="Projects" main>
+      <SectionTitleLineWithButton :icon="mdiBriefcase" title="Tasks" main>
         <BaseButton
-          href="/projects"
+          href="/tasks"
           :icon="mdiMagnify"
-          label="View Projects"
+          label="View Tasks"
           color="contrast"
           rounded-full
           small
@@ -133,11 +130,11 @@ const submitForm = async () => {
 
         <div class="flex flex-wrap -mx-3 mb-2">
           <div class="w-full md:w-1/3 px-3 mb-6 md:mb-0">
-            <FormField label="Project">
+            <FormField label="Task">
               <div class="relative">
-                <select v-model="selectedProject" class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-state">
-                  <option disabled selected value="null">Select a Project</option>
-                  <option v-for="project in projectList" :key="project.id" :value="project.id">{{ project.name }}</option>
+                <select v-model="selectedTask" class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-state">
+                  <option disabled selected value="null">Select a Task</option>
+                  <option v-for="task in taskList" :key="task.id" :value="task.id">{{ task.name }}</option>
                 </select>
               </div>
             </FormField>
@@ -162,6 +159,5 @@ const submitForm = async () => {
         </template>
       </CardBox>
     </div>
-
   </div>
 </template>

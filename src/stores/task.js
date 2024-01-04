@@ -1,10 +1,12 @@
 import axios from '../plugins/axios';
 import axiosMultipart from '../plugins/axiosMultipart';
 import { defineStore } from "pinia";
+import { useUserStore } from './user';
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
     tasks: [],
+    userStore: useUserStore(),
   }),
   actions: {
     async tasksSummary(apiBaseUrl, filters) {
@@ -35,8 +37,19 @@ export const useTaskStore = defineStore("task", {
         return error.response.data;
       }
     },
+
+    async allTasks(apiBaseUrl) {
+      try {
+        const response = await axios.get(`${apiBaseUrl}all-tasks`);
+        return response.data;
+      } catch (error) {
+        return error.response.data;
+      }
+    },
+
     async viewTask(apiBaseUrl, id) {
       try {
+        await this.userStore.userProfile(apiBaseUrl);
         const response = await axios.get(`${apiBaseUrl}task/${id}`);
         return response.data;
       } catch (error) {
@@ -79,15 +92,15 @@ export const useTaskStore = defineStore("task", {
       }
     },
 
-    // async addMemberToTask(apiBaseUrl, filters) {
-    //   //filters {project_id, user_id, created_by}
-    //   try {
-    //     const response = await axios.post(`${apiBaseUrl}task/member`, filters);
-    //     return response;
-    //   } catch (error) {
-    //     return error.response.data;
-    //   }
-    // },
+    async addMemberToTask(apiBaseUrl, filters) {
+      //filters {project_id, user_id, created_by}
+      try {
+        const response = await axios.post(`${apiBaseUrl}task/member`, filters);
+        return response;
+      } catch (error) {
+        return error.response.data;
+      }
+    },
   },
 });
 

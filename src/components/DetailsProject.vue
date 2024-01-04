@@ -15,7 +15,11 @@ import SectionMain from "./SectionMain.vue";
 import SectionTitleLineWithButton from "./SectionTitleLineWithButton.vue";
 import { mdiPlus, mdiTrashCan, mdiBriefcase } from "@mdi/js";
 import { useRoute } from 'vue-router';
-import { removeNullProperties, removeZeroProperties, formatDate, percentageArray, isImageFile } from "@/commons/constant";
+import { removeNullProperties, removeZeroProperties, formatDate, percentageArray, isImageFile, permissionsToTaskEdit, permissionsToTaskAdd, formatTimestamp } from "@/commons/constant";
+
+const currentUserPermissions = JSON.parse(localStorage.getItem('permissions'));
+const hasAccessToTaskEdit = currentUserPermissions !== null && permissionsToTaskEdit.some(permission => currentUserPermissions.includes(permission));
+const hasAccessToTaskAdd = currentUserPermissions !== null && permissionsToTaskAdd.some(permission => currentUserPermissions.includes(permission));
 
 const route = useRoute();
 
@@ -38,11 +42,9 @@ const statusList = ref([]);
 const priorityList = ref([]);
 
 const project = ref(null);
-const projectHistory = ref(null);
-const projectHistoryGroupByDate = ref(null);
-const processedProjectHistory = ref(null);
 const projectCommentList = ref([]);
 const projectAttachmentList = ref([]);
+const projectActivities = ref();
 
 const newComment = ref('');
 const newDescription = ref('');
@@ -54,34 +56,18 @@ const errorMsg = ref('');
 
 const fileInputCount = ref(0);
 
-const readFile = ref('');
-
 async function fetchProject() {
   const projectId = route.params.id;
   isLoading.value = true;
   try {
     const response = await projectStore.viewProject(apiBaseUrl, projectId);
     project.value = response.data;
-    projectHistory.value = response.data.history;
-    processedProjectHistory.value = response.data.history;
     projectCommentList.value = response.data.comments;
     projectAttachmentList.value = response.data.attachments;
+    projectActivities.value = response.data.activities;
     progress.value = response.data.progress;
     startDate.value = response.data.start_date;
     endDate.value = response.data.end_date;
-    const grouped = {};
-    response.data.history.forEach((record) => {
-      const created_at = formatDate(record.created_at);
-      if (!grouped[created_at]) {
-        grouped[created_at] = [];
-      }
-      grouped[created_at].push(record);
-    });
-    projectHistoryGroupByDate.value = grouped;
-    for (const pph in processedProjectHistory.value) {
-      removeNullProperties(processedProjectHistory.value[pph])
-      removeZeroProperties(processedProjectHistory.value[pph])
-    }
   } catch (error) {
     console.error("An error occurred:", error);
     throw error;
@@ -136,99 +122,108 @@ async function fetchJKanban() {
   const boardConfig = generateBoardConfig(tasks);
 
   window.KanbanTest = new jKanban({
-        element: "#myKanban",
-        gutter: "10px",
-        widthBoard: "300px",
-        itemHandleOptions:{
-          enabled: true,
-      },
-      click: function(el) {
-        const taskId = el.querySelector('div[data-id]').dataset.id;
-        window.open(`/task/${taskId}`, '_blank');
-        // console.log(el, "Trigger on all items click!");
-      },
-      context: function(el, e) {
-        console.log("Trigger on all items right-click!");
-      },
-      dropEl: function(el, target, source, sibling){
-        // console.log(target.parentElement.getAttribute('data-id'));
-        // console.log(el, target, source, sibling)
-        const newStatus = target.parentElement.getAttribute('data-id');
-        const taskId = el.querySelector('div[data-id]').dataset.id;
-        const formData = {'status_id': newStatus};
-        submitTaskChangeState(formData, taskId)
+    element: "#myKanban",
+    gutter: "10px",
+    widthBoard: "300px",
+    dragItems: hasAccessToTaskEdit ? true : false,
+    itemHandleOptions:{
+      enabled: hasAccessToTaskEdit ? true : false,
+    },
+    click: function(el) {
+      const taskId = el.querySelector('div[data-id]').dataset.id;
+      window.open(`/task/${taskId}`, '_blank');
+      // console.log(el, "Trigger on all items click!");
+    },
+    context: function(el, e) {
+      console.log("Trigger on all items right-click!");
+    },
+    dropEl: function(el, target, source, sibling){
+      // console.log(target.parentElement.getAttribute('data-id'));
+      // console.log(el, target, source, sibling)
+      const newStatus = target.parentElement.getAttribute('data-id');
+      const taskId = el.querySelector('div[data-id]').dataset.id;
+      const formData = {'status_id': newStatus};
+      submitTaskChangeState(formData, taskId)
+        .then(response => {
+          console.log(response);
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    },
+    buttonClick: function(el, boardId) {
+      // create a form to enter element
+      var formItem = document.createElement("form");
+      formItem.setAttribute("class", "itemform");
+      const priorityOptions = priorityList.value.map(priority => `<option value="${priority.id}">${priority.name}</option>`).join('');
+      const usersOptions = '<option value="" selected disabled></option>' + userList.value.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+      formItem.innerHTML =
+      '<div class="form-group mb-2">' +
+        '<input type="text" id="name" name="name" placeholder="Name your new Task" class="px-3 py-2 max-w-full focus:ring focus:outline-none border-gray-700 rounded w-full dark:placeholder-gray-400 h-12 border bg-white dark:bg-slate-800">' +
+        '<input type="hidden" id="project_id" value = "'+ project.value.id +'" />' +
+      '</div>' +
+      '<div class="form-group mb-2">' +
+        '<label>Start Date</label>' +
+        '<input type="date" id="start_date" value="' + startDate.value + '" class="px-3 py-2 max-w-full focus:ring focus:outline-none border-gray-700 rounded w-full dark:placeholder-gray-400 h-12 border bg-white dark:bg-slate-800">' +
+      '</div>' +
+      '<div class="form-group mb-2">' +
+        '<label>End Date</label>' +
+        '<input type="date" id="end_date" value="' + endDate.value + '" class="px-3 py-2 max-w-full focus:ring focus:outline-none border-gray-700 rounded w-full dark:placeholder-gray-400 h-12 border bg-white dark:bg-slate-800">' +
+      '</div>' +
+      '<div class="form-group mb-2">' +
+        '<label>Priority</label>' +
+        '<select id="priority_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" small>' +
+          priorityOptions +
+        '</select>' +
+      '</div>' +
+      '<div class="form-group mb-2">' +
+        '<label>Assign To</label>' +
+        '<select id="assigned_to_user_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" small>' +
+          usersOptions +
+        '</select>' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<button type="submit" class="custom-submit">Submit</button>' +
+        '<button type="button" id="CancelBtn" class="custom-cancel">Cancel</button>' +
+      '</div>';
+
+      KanbanTest.addForm(boardId, formItem);
+      formItem.addEventListener("submit", function(e) {
+        e.preventDefault();
+        // console.log(boardId);
+        const name = e.target[0].value;
+        const start_date = document.getElementById("start_date").value;
+        const end_date = document.getElementById("end_date").value;
+        const priority_id = document.getElementById("priority_id").value;
+        const assigned_to_user_id = document.getElementById("assigned_to_user_id").value;
+        const project_id = document.getElementById("project_id").value;
+
+        const formData = {'name':name, 'start_date':start_date, 'end_date':end_date, 'priority_id':priority_id, 'assigned_to_user_id': assigned_to_user_id, 'status_id':boardId, 'project_id': project_id};
+
+        submitTask(formData)
           .then(response => {
-            console.log(response);
+            KanbanTest.addElement(boardId, {
+              title: `<div data-id="${response.data.data.id}">${response.data.data.name}</div>`
+            });
+            formItem.parentNode.removeChild(formItem);
           })
           .catch(error => {
             console.error(error);
+            console.log('error');
           });
-      },
-      buttonClick: function(el, boardId) {
-        // create a form to enter element
-        var formItem = document.createElement("form");
-        formItem.setAttribute("class", "itemform");
-        const priorityOptions = priorityList.value.map(priority => `<option value="${priority.id}">${priority.name}</option>`).join('');
-        formItem.innerHTML =
-        '<div class="form-group mb-2">' +
-          '<input type="text" id="name" name="name" placeholder="Name your new Task" class="px-3 py-2 max-w-full focus:ring focus:outline-none border-gray-700 rounded w-full dark:placeholder-gray-400 h-12 border bg-white dark:bg-slate-800">' +
-          '<input type="hidden" id="project_id" value = "'+ project.value.id +'" />' +
-        '</div>' +
-        '<div class="form-group mb-2">' +
-          '<label>Start Date</label>' +
-          '<input type="date" id="start_date" value="' + startDate.value + '" class="px-3 py-2 max-w-full focus:ring focus:outline-none border-gray-700 rounded w-full dark:placeholder-gray-400 h-12 border bg-white dark:bg-slate-800">' +
-        '</div>' +
-        '<div class="form-group mb-2">' +
-          '<label>End Date</label>' +
-          '<input type="date" id="end_date" value="' + endDate.value + '" class="px-3 py-2 max-w-full focus:ring focus:outline-none border-gray-700 rounded w-full dark:placeholder-gray-400 h-12 border bg-white dark:bg-slate-800">' +
-        '</div>' +
-        '<div class="form-group mb-2">' +
-          '<label>Priority</label>' +
-          '<select id="priority_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" small>' +
-            priorityOptions +
-          '</select>' +
-        '</div>' +
-        '<div class="form-group">' +
-          '<button type="submit" class="custom-submit">Submit</button>' +
-          '<button type="button" id="CancelBtn" class="custom-cancel">Cancel</button>' +
-        '</div>';
-
-        KanbanTest.addForm(boardId, formItem);
-        formItem.addEventListener("submit", function(e) {
-          e.preventDefault();
-          // console.log(boardId);
-          const name = e.target[0].value;
-          const start_date = document.getElementById("start_date").value;
-          const end_date = document.getElementById("end_date").value;
-          const priority_id = document.getElementById("priority_id").value;
-          const project_id = document.getElementById("project_id").value;
-
-          const formData = {'name':name, 'start_date':start_date, 'end_date':end_date, 'priority_id':priority_id, 'status_id':boardId, 'project_id': project_id};
-
-          submitTask(formData)
-            .then(response => {
-              KanbanTest.addElement(boardId, {
-                title: `<div data-id="${response.data.data.id}">${response.data.data.name}</div>`
-              });
-              formItem.parentNode.removeChild(formItem);
-            })
-            .catch(error => {
-              console.error(error);
-              console.log('error');
-            });
-        });
-        document.getElementById("CancelBtn").onclick = function() {
-          formItem.parentNode.removeChild(formItem);
-        };
-      },
-      itemAddOptions: {
-        enabled: true,
-        content: '+ Add New Task',
-        class: 'custom-button',
-        footer: true
-      },
-      boards: boardConfig,
-    });
+      });
+      document.getElementById("CancelBtn").onclick = function() {
+        formItem.parentNode.removeChild(formItem);
+      };
+    },
+    itemAddOptions: {
+      enabled: hasAccessToTaskAdd ? true : false,
+      content: '+ Add New Task',
+      class: 'custom-button',
+      footer: true
+    },
+    boards: boardConfig,
+  });
 
     // var allEle = KanbanTest.getBoardElements("_todo");
     // allEle.forEach(function(item, index) {
@@ -260,7 +255,6 @@ const submitTaskChangeState = async (formData, id) => {
 };
 
 function generateBoardConfig(tasks) {
-  //const uniqueStatusNames = [...new Set(tasks.map(task => getStatusNameById(task.status_id)))];
   const uniqueStatusNames = [...new Set(statusList.value.map(status => status.name))];
 
   return uniqueStatusNames.map(statusName => {
@@ -395,12 +389,12 @@ const submitComment = async () => {
       newDescription.value === project.value.description &&
       progress.value === project.value.progress
     ) {
-    errorMsg.value = "Fill at least one criterion to update the project";
+    errorMsg.value = "Fill at least one criteria to update the project";
     return;
 }
 
   try {
-    const response = await projectStore.addCommentToProject(apiBaseUrl, formData, project.value.id);
+    await projectStore.addCommentToProject(apiBaseUrl, formData, project.value.id);
     newName.value = '';
     newDescription.value = '';
     newComment.value = '';
@@ -442,6 +436,7 @@ const submitComment = async () => {
                   <div class="mb-3 w-full">
                     <select v-model="project.status_id"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      style="min-width: 120px;"
                       @change="openModal('status', project, $event.target.value)" small>
                       <option v-for="status in statusList" :key="status.id" :value="status.id">
                         {{ status.name }}
@@ -457,6 +452,7 @@ const submitComment = async () => {
                   <div class="mb-3 w-full">
                     <select v-model="project.priority_id"
                       class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      style="min-width: 120px;"
                       @change="openModal('priority', project, $event.target.value)" small>
                       <option v-for="priority in priorityList" :key="priority.id" :value="priority.id">
                         {{ priority.name }}
@@ -466,7 +462,7 @@ const submitComment = async () => {
                 </div>
 
                 <div class="flex-1">
-                  <div class="mb-1 w-full">
+                  <div class="mb-1 w-full" style="min-width: 120px;">
                     <b>Start Date</b>
                   </div>
                   <div class="mb-3 w-full">
@@ -475,7 +471,7 @@ const submitComment = async () => {
                 </div>
 
                 <div class="flex-1">
-                  <div class="mb-1 w-full">
+                  <div class="mb-1 w-full" style="min-width: 120px;">
                     <b>End Date</b>
                   </div>
                   <div class="mb-3 w-full">
@@ -519,76 +515,79 @@ const submitComment = async () => {
                   />
                 </div>
               </div>
-
-              <div class="flex-1 gap-6 mb-3">
+            </div>
+            <div class="flex flex-col gap-6">
+              <div class="flex-1">
                 <div class="mb-2 w-full">
                   <label><b>Progress</b></label>
                 </div>
-              </div>
-
-              <div class="flex-1 mb-6">
-                <progress class="flex w-2/5 self-center lg:w-full" max="100" :value="project.progress">
-                  {{ project.progress }}
-                </progress>
-              </div>
-
-              <div class="flex-1 gap-6 mb-1">
-                <div class="mb-2 w-full">
-                  <label><b>Description</b></label>
+                <div class="flex-1">
+                  <progress class="flex self-center lg:w-full" style="width:100%" max="100" :value="project.progress">
+                    {{ project.progress }}
+                  </progress>
                 </div>
               </div>
 
               <div class="flex-1">
-                {{ project.description }}
+                <div class="mb-2 w-full">
+                  <label><b>Description</b></label>
+                </div>
+                <div class="flex-1">
+                  {{ project.description }}
+                </div>
               </div>
             </div>
           </CardBox>
 
-          <CardBox v-for="(history, date) in projectHistoryGroupByDate" :key="date" class="text-justify">
-            <div v-for="(h, index) in history" :key="h.id" class="flex flex-row gap-6">
+          <CardBox v-for="(data, index) in projectActivities" :key="data" class="text-justify">
+            <div class="flex flex-row gap-6" :key="index">
               <div class="flex-1 gap-6 mb-3">
-                <div v-show="h.name !== undefined"><b>Project Name</b> - <span class="bold">{{ h.name }}</span></div>
-                <div v-show="h.description !== undefined"><b>Description</b> - <span class="bold">{{ h.description }}</span></div>
-                <div v-show="h.status_id !== undefined">
-                  <b>Status updated to</b> - <span class="bold">{{ statusList.find(status => status.id === h.status_id)?.name || 'Status not found' }}</span>
+                <div v-if="data.description === 'Project created'">
+                  {{ data.description }}
                 </div>
-                <div v-show="h.priority_id !== undefined">
-                  <b>Priority updated to </b> - <span class="bold">{{ priorityList.find(priority => priority.id === h.priority_id)?.name || 'Priority not found' }}</span>
+                <div v-else>
+                  <div v-if="data.properties.data.name !== undefined"><b>Project Name</b> - <span class="bold">{{ data.properties.data.name }}</span></div>
+                  <div v-if="data.properties.data.description !== undefined"><b>Description</b> - <span class="bold">{{ data.properties.data.description }}</span></div>
+                  <div v-if="data.properties.data.status_id !== undefined">
+                    <b>Status updated to</b> -
+                    <span class="bold">
+                      {{ statusList.find(status => status.id === parseInt(data.properties.data.status_id))?.name || 'Status not found' }}
+                    </span>
+                  </div>
+                  <div v-show="data.properties.data.priority_id !== undefined">
+                    <b>Priority updated to </b> - <span class="bold">{{ priorityList.find(priority => priority.id === data.properties.data.priority_id)?.name || 'Priority not found' }}</span>
+                  </div>
+                  <div v-if="data.properties.data.start_date !== undefined"><b>Start Date</b> - <span class="bold">{{ data.properties.data.start_date }}</span></div>
+                  <div v-if="data.properties.data.end_date !== undefined"><b>End Date</b> - <span class="bold">{{ data.properties.data.end_date }}</span></div>
+                  <div v-if="data.properties.data.estimated_hours > 0"><b>Estimated hours</b> - <span class="bold">{{ data.properties.data.estimated_hours }} hrs</span></div>
+                  <div v-if="data.properties.data.spent_hours > 0"><b>Spent hours</b> - <span class="bold">{{ data.properties.data.spent_hours }} hrs</span></div>
+                  <div v-if="data.properties.data.progress > 0"><b>Progress</b> - <span class="bold">{{ data.properties.data.progress }}</span></div>
+                  <div v-if="data.properties.data.assigned_to_user_id !== undefined">
+                    <b>Assigned To</b> - <span class="bold">{{ userList.find(user => user.id === data.properties.data.assigned_to_user_id)?.name || 'User not found' }}</span>
+                  </div>
+                  <div v-if="data.properties.data.comment_id !== undefined">
+                    <b>Comment</b> <br /> <span class="bold">{{ projectCommentList.find(comment => comment.id === data.properties.data.comment_id)?.comment_text || 'Comment not found' }}</span>
+                  </div>
+                  <div v-if="data.properties.data.attachment_ids !== undefined" class="flex flex-wrap">
+                    <div v-for="(attachmentId, a_index) in data.properties.data.attachment_ids" :key="'attachment_'+a_index" class="flex-shrink-0 p-2">
+                      <a v-if="isImageFile(projectAttachmentList.find(attachment => attachment.id === parseInt(attachmentId))?.file_name)"
+                        :href="apiBaseAssetsUrl + project.id + '/' + projectAttachmentList.find(attachment => attachment.id === attachmentId)?.file_name"
+                        target="_blank" rel="noopener noreferrer">
+                          <div class="image-preview-container">
+                            <img :src="apiBaseAssetsUrl + project.id + '/' + projectAttachmentList.find(attachment => attachment.id === attachmentId)?.file_name" alt="Attachment" class="image-preview">
+                          </div>
+                      </a>
+                      <a v-else
+                        :href="apiBaseAssetsUrl + project.id + '/' + projectAttachmentList.find(attachment => attachment.id === attachmentId)?.file_name"
+                        download>
+                          {{ projectAttachmentList.find(attachment => attachment.id === attachmentId)?.file_name }}
+                      </a>
+                    </div>
+                  </div>
                 </div>
-                <div v-show="h.start_date !== undefined"><b>Start Date</b> - <span class="bold">{{ h.start_date }}</span></div>
-                <div v-show="h.end_date !== undefined"><b>End Date</b> - <span class="bold">{{ h.end_date }}</span></div>
-                <div v-show="h.estimated_hours > 0"><b>Estimated hours</b> - <span class="bold">{{ h.estimated_hours }} hrs</span></div>
-                <div v-show="h.spent_hours > 0"><b>Spent hours</b> - <span class="bold">{{ h.spent_hours }} hrs</span></div>
-                <div v-show="h.progress > 0"><b>Progress</b> - <span class="bold">{{ h.progress }}</span></div>
-                <div v-show="h.assigned_to_user_id !== undefined">
-                  <b>Assigned To</b> - <span class="bold">{{ userList.find(user => user.id === h.assigned_to_user_id)?.name || 'User not found' }}</span>
+                <div class="text-right"><hr>
+                  <small>Updated by {{ userList.find(user => user.id === data.causer_id)?.name || 'User not found' }}  on  {{ formatTimestamp(data.created_at) }}</small>
                 </div>
-                <div v-show="h.comment_id !== undefined">
-                  <b>Comment</b> - <span class="bold">{{ projectCommentList.find(comment => comment.id === h.comment_id)?.comment_text || 'Comment not found' }}</span>
-                </div>
-
-                <div v-if="h.attachment_id !== undefined">
-                  <template v-if="projectAttachmentList.find(attachment => attachment.id === h.attachment_id)">
-                    <a v-if="isImageFile(projectAttachmentList.find(attachment => attachment.id === h.attachment_id)?.file_name)"
-                      :href="apiBaseAssetsUrl + project.id + '/' + projectAttachmentList.find(attachment => attachment.id === h.attachment_id)?.file_name"
-                      target="_blank" rel="noopener noreferrer">
-                        <div class="image-preview-container">
-                          <img :src="apiBaseAssetsUrl + project.id + '/' + projectAttachmentList.find(attachment => attachment.id === h.attachment_id)?.file_name" alt="Attachment" class="image-preview">
-                        </div>
-                    </a>
-                    <a v-else
-                      :href="apiBaseAssetsUrl + project.id + '/' + projectAttachmentList.find(attachment => attachment.id === h.attachment_id)?.file_name"
-                      download>
-                        {{ projectAttachmentList.find(attachment => attachment.id === h.attachment_id)?.file_name }}
-                    </a>
-                  </template>
-                  <span v-else>
-                    File not found
-                  </span>
-                </div>
-              </div>
-              <div v-if="index === 0" class="ml-auto text-right">
-                Updated by <br /> {{ userList.find(user => user.id === h.user_id)?.name || 'User not found' }} <br /> on  {{ date }}
               </div>
             </div>
           </CardBox>
@@ -617,18 +616,20 @@ const submitComment = async () => {
       </div>
     </div>
     <div v-if="project">
-      <SectionTitleLineWithButton :icon="mdiBriefcase" title="Tasks Related"></SectionTitleLineWithButton>
-      <div id="myKanban"></div>
+      <div v-if="hasAccessToTaskEdit">
+        <SectionTitleLineWithButton :icon="mdiBriefcase" title="Tasks Related" main></SectionTitleLineWithButton>
+        <div id="myKanban"></div>
+      </div>
       <CardBox form @submit.prevent="submitComment">
         <div v-if="errorMsg" class="text-red-500">{{ errorMsg }}</div>
-        <div class="flex-1 w-full">
+        <!-- <div class="flex-1 w-full">
           <label for="completed_progress" class="p-2">Update Project Name: </label>
           <FormControl class="flex-1 mb-3" v-model="newName" placeholder="Update the project Name" />
         </div>
         <div class="flex-1 w-full">
           <label for="completed_progress" class="p-2">Update Project Description: </label>
           <FormControl class="flex-1 mb-3" type="textarea" v-model="newDescription" placeholder="Update the project Description" />
-        </div>
+        </div> -->
         <div class="flex flex-col sm:flex-row mb-3 gap-6">
           <div class="flex-1 w-full">
             <label for="completed_progress" class="p-2">Completed: </label>

@@ -21,6 +21,7 @@ import AddPermission from "@/views/Permission/AddPermission.vue";
 import Task from "@/views/Task/Tasks.vue";
 import AddTask from "@/views/Task/AddTask.vue";
 import TaskDetails from "@/views/Task/TaskDetails.vue";
+import AddMemberToTask from "@/views/Task/AddMemberToTask.vue";
 
 const routes = [
   {
@@ -136,7 +137,15 @@ const routes = [
     component: TaskDetails,
     meta: { requiresAuth: true },
   },
-
+  {
+    meta: {
+      title: "Add Member to Task",
+    },
+    path: "/task/member/add",
+    name: "AddMemberToTask",
+    component: AddMemberToTask,
+    meta: { requiresAuth: true },
+  },
   {
     meta: {
       title: "All Roles",

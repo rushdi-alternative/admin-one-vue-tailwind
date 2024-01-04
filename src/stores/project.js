@@ -1,10 +1,12 @@
 import axios from '../plugins/axios';
 import axiosMultipart from '../plugins/axiosMultipart';
 import { defineStore } from "pinia";
+import { useUserStore } from './user';
 
 export const useProjectStore = defineStore("project", {
   state: () => ({
     projects: [],
+    userStore: useUserStore(),
   }),
   actions: {
     objectToQueryParams(obj) {
@@ -26,6 +28,7 @@ export const useProjectStore = defineStore("project", {
 
     async allProjects(apiBaseUrl) {
       try {
+        await this.userStore.userProfile(apiBaseUrl);
         const response = await axios.get(`${apiBaseUrl}all-projects`);
         return response.data;
       } catch (error) {
@@ -35,6 +38,7 @@ export const useProjectStore = defineStore("project", {
 
     async viewProject(apiBaseUrl, id) {
       try {
+        await this.userStore.userProfile(apiBaseUrl);
         const response = await axios.get(`${apiBaseUrl}project/${id}`);
         return response.data;
       } catch (error) {
@@ -43,8 +47,8 @@ export const useProjectStore = defineStore("project", {
     },
 
     async projectsSummary(apiBaseUrl, filters) {
-      console.log(filters);
       try {
+        await this.userStore.userProfile(apiBaseUrl);
         const response = await axios.get(`${apiBaseUrl}projects-summary?${this.objectToQueryParams(filters)}`);
         return response.data;
       } catch (error) {

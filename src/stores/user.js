@@ -68,8 +68,24 @@ export const useUserStore = defineStore("user", {
 
     async changeUserPassword(apiBaseUrl, filters, id) {
       try {
+        userProfile(apiBaseUrl);
         const response = await axios.put(`${apiBaseUrl}user/${id}/change-password`, filters);
         return response;
+      } catch (error) {
+        return error.response.data;
+      }
+    },
+    async userProfile(apiBaseUrl) {
+      //will need to add to all the api calls to check the user changes
+      try {
+        const response = await axios.get(`${apiBaseUrl}profile`);
+        const user = response.data.user;
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('userName', user.name);
+        localStorage.setItem('roleId', user.role_id);
+        localStorage.setItem('roleName', user.role);
+        localStorage.setItem('permissions', JSON.stringify(user.permissions));
+        return true;
       } catch (error) {
         return error.response.data;
       }

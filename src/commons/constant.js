@@ -47,7 +47,6 @@ export const generateRandomPassword = () => {
 export const handleError = (response) => {
   let errorMessages = [];
 
-  console.log(response)
   if (response) {
     if (response.errors) {
       const errorObject = response.errors;
@@ -58,7 +57,7 @@ export const handleError = (response) => {
       }
       return errorMessages.join('\n');
     } else if (response.error) {
-      if(response.error.name !== 'undefined') {
+      if(typeof response.error.name !== 'undefined') {
         return response.error.name[0];
       }
       return response.error;
@@ -90,6 +89,10 @@ export const isImageFile = (fileName) => {
   return imageExtensions.includes(fileExtension);
 };
 
+export const formatTimestamp = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
+}
 
 export const permissionsToRoleEdit = ['admin', 'role:edit'];
 export const permissionsToRoleAdd = ['admin', 'role:add'];
