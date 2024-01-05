@@ -6,10 +6,8 @@ import FormControl from "./FormControl.vue";
 import BaseButtons from "@/components/BaseButtons.vue";
 import BaseButton from "@/components/BaseButton.vue";
 import { useProjectStore } from "@/stores/project";
-import { useStatusStore } from "@/stores/status";
 import { useTaskStore } from "@/stores/task";
 import { useUserStore } from "@/stores/user";
-import { usePriorityStore } from "@/stores/priorities";
 import CardBoxModal from "./CardBoxModal.vue";
 import SectionMain from "./SectionMain.vue";
 import SectionTitleLineWithButton from "./SectionTitleLineWithButton.vue";
@@ -25,8 +23,6 @@ const route = useRoute();
 
 const projectStore = useProjectStore();
 const taskStore = useTaskStore();
-const statusStore = useStatusStore();
-const priorityStore = usePriorityStore();
 const userStore = useUserStore();
 
 const apiBaseUrl = inject('apiBaseUrl');
@@ -68,6 +64,8 @@ async function fetchProject() {
     progress.value = response.data.progress;
     startDate.value = response.data.start_date;
     endDate.value = response.data.end_date;
+    statusList.value = response.status.data;
+    priorityList.value = response.priority.data;
   } catch (error) {
     console.error("An error occurred:", error);
     throw error;
@@ -83,32 +81,6 @@ async function fetchUsers() {
   try {
     const response = await userStore.allUsers(apiBaseUrl);
     userList.value = response.users;
-  } catch (error) {
-    console.error("An error occurred:", error);
-    throw error;
-  } finally {
-    isLoading.value = false;
-  }
-}
-
-async function fetchStatus() {
-  isLoading.value = true;
-  try {
-    const response = await statusStore.statuses(apiBaseUrl, { all: true });
-    statusList.value = response.data;
-  } catch (error) {
-    console.error("An error occurred:", error);
-    throw error;
-  } finally {
-    isLoading.value = false;
-  }
-}
-
-async function fetchPriorities() {
-  isLoading.value = true;
-  try {
-    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
-    priorityList.value = response.data;
   } catch (error) {
     console.error("An error occurred:", error);
     throw error;
@@ -306,8 +278,6 @@ function capitalizeFirstLetter(str) {
 
 onMounted(async () => {
   await fetchUsers();
-  await fetchStatus();
-  await fetchPriorities();
   await fetchProject();
   await fetchJKanban();
 

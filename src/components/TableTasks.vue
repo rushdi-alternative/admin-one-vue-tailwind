@@ -7,17 +7,13 @@ import CardBoxComponentTitle from "@/components/CardBoxComponentTitle.vue";
 import BaseLevel from "@/components/BaseLevel.vue";
 import BaseButtons from "@/components/BaseButtons.vue";
 import BaseButton from "@/components/BaseButton.vue";
-import { useStatusStore } from "@/stores/status";
 import { useUserStore } from "@/stores/user";
-import { usePriorityStore } from "@/stores/priorities";
 import CardBoxModal from "./CardBoxModal.vue";
 import { mdiPlus, mdiTrashCan, mdiBriefcase, mdiPencil } from "@mdi/js";
 import { permissionsToTaskAdd, permissionsToTaskDelete, permissionsToTaskEdit } from "@/commons/constant";
 import SectionTitleLineWithButton from "./SectionTitleLineWithButton.vue";
 
 const taskStore = useTaskStore();
-const statusStore = useStatusStore();
-const priorityStore = usePriorityStore();
 const userStore = useUserStore();
 
 const apiBaseUrl = inject('apiBaseUrl');
@@ -35,7 +31,6 @@ const isModalOpen = ref(false);
 const isLoading = ref(true);
 const perPage = ref(10);
 const currentPage = ref(0);
-const checkedRows = ref([]);
 
 const userList = ref([]);
 const statusList = ref([]);
@@ -60,27 +55,6 @@ const pagesList = computed(() => {
   return pagesList;
 });
 
-const remove = (arr, cb) => {
-  const newArr = [];
-  arr.forEach((item) => {
-    if (!cb(item)) {
-      newArr.push(item);
-    }
-  });
-  return newArr;
-};
-
-const checked = (isChecked, task) => {
-  if (isChecked) {
-    checkedRows.value.push(task);
-  } else {
-    checkedRows.value = remove(
-      checkedRows.value,
-      (row) => row.id === task.id
-    );
-  }
-};
-
 const goToPage = (page) => {
   isLoading.value = true;
   currentPage.value = page;
@@ -100,6 +74,8 @@ async function fetchTasks(filters) {
     tasks.value = response.data;
     numPages.value = Math.ceil(response.count / perPage.value);
     noOfTasks.value = response.count;
+    statusList.value = response.status.data;
+    priorityList.value = response.priority.data;
   } catch (error) {
     console.error("An error occurred:", error);
     throw error;
@@ -120,32 +96,6 @@ async function fetchUsers() {
     throw error;
   } finally {
     isLoading.value = false;
-  }
-}
-
-async function fetchStatus() {
-  isLoading.value  = true;
-  try {
-    const response = await statusStore.statuses(apiBaseUrl, { all: true });
-    statusList.value = response.data;
-  } catch (error) {
-    console.error("An error occurred:", error);
-    throw error;
-  } finally {
-    isLoading.value  = false;
-  }
-}
-
-async function fetchPriorities() {
-  isLoading.value  = true;
-  try {
-    const response = await priorityStore.priorities(apiBaseUrl, { all: true });
-    priorityList.value = response.data;
-  } catch (error) {
-    console.error("An error occurred:", error);
-    throw error;
-  } finally {
-    isLoading.value  = false;
   }
 }
 
@@ -189,8 +139,6 @@ watch(perPage, async () => {
 
 onMounted(async () => {
   await fetchUsers();
-  await fetchStatus();
-  await fetchPriorities();
   await fetchTasks({ 'priority_id': defaultSelectedPriorityId, 'sort': ['id:desc', `${sortBy}:${sort}`] });
 });
 

@@ -14,7 +14,22 @@ import {
   mdiPlus,
   mdiBriefcase,
 } from "@mdi/js";
-import { permissionsToAddMembersProject, permissionsToPermissionAdd, permissionsToPermissionView, permissionsToProjectAdd, permissionsToProjectView, permissionsToRoleAdd, permissionsToRoleView, permissionsToUserAdd, permissionsToUserView, permissionsToViewMembersProject } from "./commons/constant";
+import {
+  permissionsToAddMembersProject,
+  permissionsToAddMembersTask,
+  permissionsToPermissionAdd,
+  permissionsToPermissionView,
+  permissionsToProjectAdd,
+  permissionsToProjectView,
+  permissionsToRoleAdd,
+  permissionsToRoleView,
+  permissionsToTaskAdd,
+  permissionsToTaskView,
+  permissionsToUserAdd,
+  permissionsToUserView,
+  permissionsToViewMembersProject,
+  permissionsToViewMembersTask
+} from "./commons/constant";
 
 const currentUserPermissions = JSON.parse(localStorage.getItem('permissions'));
 
@@ -23,6 +38,12 @@ const hasAccessToProjectView = currentUserPermissions !== null && permissionsToP
 
 const hasAccessToAddMemberToProject = currentUserPermissions !== null && permissionsToAddMembersProject.some(permission => currentUserPermissions.includes(permission));
 // const hasAccessToViewMemberToProject = currentUserPermissions !== null && permissionsToViewMembersProject.some(permission => currentUserPermissions.includes(permission));
+
+const hasAccessToTaskCreate = currentUserPermissions !== null && permissionsToTaskAdd.some(permission => currentUserPermissions.includes(permission));
+const hasAccessToTaskView = currentUserPermissions !== null && permissionsToTaskView.some(permission => currentUserPermissions.includes(permission));
+
+const hasAccessToAddMemberToTask = currentUserPermissions !== null && permissionsToAddMembersTask.some(permission => currentUserPermissions.includes(permission));
+// const hasAccessToViewMemberToTask = currentUserPermissions !== null && permissionsToViewMembersTask.some(permission => currentUserPermissions.includes(permission));
 
 const hasAccessToUserCreate = currentUserPermissions !== null && permissionsToUserAdd.some(permission => currentUserPermissions.includes(permission));
 const hasAccessToUserView = currentUserPermissions !== null && permissionsToUserView.some(permission => currentUserPermissions.includes(permission));
@@ -38,7 +59,7 @@ const menuItems = [];
 if (hasAccessToProjectCreate || hasAccessToProjectView) {
   const projectMenu = {
     icon: mdiBriefcase,
-    label: "Projects",
+    label: "My Projects",
     menu: [],
   };
 
@@ -72,6 +93,45 @@ if (hasAccessToProjectCreate || hasAccessToProjectView) {
   }
 
   menuItems.push(projectMenu);
+}
+
+if (hasAccessToTaskCreate || hasAccessToTaskView) {
+  const taskMenu = {
+    icon: mdiBriefcase,
+    label: "My Tasks",
+    menu: [],
+  };
+
+  if (hasAccessToTaskView) {
+    taskMenu.menu.push({
+      to: "/tasks",
+      icon: mdiFaceManProfile,
+      label: "View",
+    });
+  }
+
+  if (hasAccessToTaskCreate) {
+    taskMenu.menu.push({
+      to: "/task/create",
+      icon: mdiPlus,
+      label: "Add",
+    });
+  }
+
+  if (hasAccessToAddMemberToTask) {
+    taskMenu.menu.push({
+      isDivider: true,
+    });
+    if (hasAccessToAddMemberToTask) {
+      taskMenu.menu.push({
+        to: "/task/member/add",
+        icon: mdiPlus,
+        label: "Add Member to Task",
+      });
+    }
+  }
+
+  menuItems.push(taskMenu);
 }
 
 if (hasAccessToUserCreate || hasAccessToUserView) {
